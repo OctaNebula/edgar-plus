@@ -1,0 +1,367 @@
+/* styles.css */
+/* Force Consolas Font Override for specific elements only */
+@font-face {
+    font-family: 'IosevkaSlabWEB';
+    src: local('Consolas'); /* Trick it to use Consolas if it tries to load Iosevka */
+}
+
+@font-face {
+    font-family: 'Iosevka';
+    src: local('Consolas');
+}
+
+.table td.edgar-code,
+.table th.edgar-code,
+.edgar-code,
+.CodeMirror,
+#aii-countdown,
+pre,
+code {
+    font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace !important;
+    font-variant-ligatures: none !important;
+}
+
+#edgar-plus-ace-editor {
+    border: 1px solid #444;
+    border-top: none;
+    border-bottom: none;
+    border-radius: 0;
+    font-size: 14px;
+    overflow-anchor: none; /* Prevent scroll jumping when resizing */
+}
+
+#edgar-plus-footer {
+    background-color: #2F3129;
+    border: 1px solid #444;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    padding: 10px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.edgar-plus-btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+.edgar-plus-square-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    font-size: 18px;
+    transition: opacity 0.2s;
+}
+
+.edgar-plus-square-btn:hover {
+    opacity: 0.9;
+}
+
+.edgar-plus-square-btn.edgar-loading {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+@keyframes edgar-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(-360deg); }
+}
+
+.edgar-spin {
+    animation: edgar-spin 1s linear infinite;
+}
+
+.edgar-plus-sm-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+}
+
+.edgar-plus-square-btn i {
+    pointer-events: none; /* Ensure click hits button */
+}
+
+/* Tooltip Styles */
+.edgar-plus-square-btn {
+    position: relative;
+}
+
+.edgar-plus-square-btn::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background-color: #2F3129;
+    color: #f8f8f2;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    border: 1px solid #444;
+}
+
+/* Tooltip Arrow (Simple triangle) */
+.edgar-plus-square-btn::before {
+    content: '';
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    border: 6px solid transparent;
+    border-top-color: #2F3129;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    z-index: 1000;
+    margin-bottom: -11px; /* Adjust to connect with tooltip */
+}
+
+.edgar-plus-square-btn:hover::after,
+.edgar-plus-square-btn:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+#edgar-plus-toolbar {
+    background-color: #2F3129; /* Monokai background match */
+    border: 1px solid #444;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0; /* Rounded top corners */
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: sans-serif;
+    color: #f8f8f2;
+}
+
+#edgar-plus-toolbar select {
+    padding: 2px 5px;
+    border-radius: 3px;
+    border: 1px solid #555;
+    background-color: #444;
+    color: #f8f8f2;
+}
+
+#edgar-plus-zoom-in {
+    margin-right: 10px; /* Add space between zoom and detach */
+}
+
+#edgar-plus-toolbar button {
+    padding: 2px 8px;
+    cursor: pointer;
+    border: 1px solid #555;
+    border-radius: 3px;
+    background-color: #444;
+    color: #f8f8f2;
+    font-weight: bold;
+}
+
+#edgar-plus-toolbar button:hover {
+    background-color: #555;
+}
+
+#edgar-plus-toolbar span {
+    font-size: 12px;
+    color: #ccc;
+}
+
+#edgar-plus-zoom-level {
+    min-width: 40px;
+    text-align: center;
+    font-family: monospace;
+    color: #fff !important;
+}
+
+/* Settings Button */
+#edgar-plus-settings-btn {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    margin-left: 5px;
+}
+
+#edgar-plus-settings-btn:hover {
+    background-color: #444;
+    color: #fff;
+}
+
+/* Modal Overlay */
+#edgar-plus-settings-modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+#edgar-plus-settings-modal.show {
+    opacity: 1;
+}
+
+/* Modal Content */
+.edgar-plus-modal-content {
+    background-color: #2F3129;
+    border: 1px solid #444;
+    border-radius: 6px;
+    width: 300px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    color: #f8f8f2;
+    font-family: sans-serif;
+    position: relative;
+}
+
+.edgar-plus-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
+}
+
+.edgar-plus-modal-title {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.edgar-plus-close-btn {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.edgar-plus-close-btn:hover {
+    color: #fff;
+}
+
+/* Settings Items */
+.edgar-plus-setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.edgar-plus-setting-label {
+    font-size: 14px;
+}
+
+/* Toggle Switch */
+.edgar-plus-switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+}
+
+.edgar-plus-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.edgar-plus-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #555;
+  transition: .4s;
+  border-radius: 20px;
+}
+
+.edgar-plus-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .edgar-plus-slider {
+  background-color: #a6e22e; /* Monokai Green */
+}
+
+input:focus + .edgar-plus-slider {
+  box-shadow: 0 0 1px #a6e22e;
+}
+
+input:checked + .edgar-plus-slider:before {
+  transform: translateX(14px);
+}
+
+/* Hide original buttons immediately to prevent flash */
+button[title="Ctrl+Enter"] {
+    display: none !important;
+}
+
+/* Timer Styling */
+#aii-countdown {
+    background-color: transparent !important;
+    color: #f8f8f2; /* Monokai foreground */
+    border: none !important;
+    padding: 5px 10px;
+    font-family: 'Iosevka', 'Consolas', monospace !important;
+    font-size: 1.5em; /* Slightly larger */
+    text-align: center;
+    min-width: 120px;
+    display: inline-block;
+    position: relative; /* For progress bar */
+    margin-bottom: 0 !important;
+}
+
+/* The shrinking line */
+.edgar-timer-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background-color: #a6e22e; /* Default Green */
+    transition: width 1s linear, background-color 0.5s ease;
+    width: 100%; /* Starts full */
+}
+
+/* Override the red error class if present */
+#aii-countdown.aii-clock-error {
+    color: #f92672; /* Monokai Pink/Red */
+    border: none !important;
+    background-color: transparent !important;
+}
