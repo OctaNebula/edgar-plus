@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novi update!</title>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 90%;
+            padding: 40px;
+            background: #252526;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            border: 1px solid #333;
+            position: relative;
+            min-height: 400px;
+            /* Prevent layout shift */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        h1 {
+            color: #ffd700;
+            margin-bottom: 20px;
+            font-size: 3em;
+        }
+
+        p.subtitle {
+            color: #a0a0a0;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+
+        /* Sections */
+        .section {
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .hidden {
+            display: none;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .fade-out {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        .fade-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Blog Styles */
+        #blog-section {
+            text-align: left;
+            line-height: 1.8;
+            font-size: 1.1em;
+            color: #cccccc;
+        }
+
+        #blog-section p {
+            margin-bottom: 20px;
+        }
+
+        /* Features/Changelog Styles */
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            text-align: center;
+        }
+
+        .feature-card {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #3c3c3c;
+            transition: transform 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1 1 200px;
+            max-width: 300px;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: #ffd700;
+        }
+
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        h3 {
+            color: #569cd6;
+            margin: 0 0 10px 0;
+        }
+
+        .feature-card p {
+            color: #cccccc;
+            font-size: 0.95em;
+            line-height: 1.5;
+            margin: 0;
+            text-align: left;
+            width: 100%;
+        }
+
+        .footer {
+            margin-top: 40px;
+            border-top: 1px solid #3c3c3c;
+            padding-top: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        /* Button */
+        .btn {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 30px;
+            background: #ffd700;
+            color: #1e1e1e;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 4px;
+            transition: background 0.2s, transform 0.2s;
+            cursor: pointer;
+            border: none;
+            font-size: 1em;
+        }
+
+        .btn:hover {
+            background: #ffea00;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Edgar+ v1.1</h1>
+
+        <!-- Blog Section (Initial View) -->
+        <div id="blog-section" class="section">
+            <p class="subtitle">Konačno, novi update!</p>
+            <p>
+                Zdravo svima! Prošlo je boga mi dosta puno vremena otkako sam radio na ovom web extensionu, ali eto
+                (nadam se) do ispita bi Chrome trebao dovesti svoje sranje u red i objaviti novi update (hvala Mozilli
+                što će ga publishati gotovo na licu mjesta lmfao).
+            </p>
+            <p>
+                Dosta puno toga mi se dogodilo u zadnja 2 mjeseca, od raznih uspješnih projekata do nedavno slomljene
+                noge
+                (jao), pa baš nisam bio u stanju posvetiti dovoljno vremena da nadogradim ovaj extension - prije nego
+                što sam se uopće mogao primiti ajmo to tako nazvati "zabavnih" stvari, morao sam popraviti brojne
+                bugove koje nisam počistio pri objavljivanju v1.0. Edgar+ov kod je malo neuredan (slobodno bacite oko na
+                GitHub), što mi je dovoljno otežalo cijelu proceduru popravljanja tih bugova. Ali eto, s dobre strane
+                uspio sam, i mogu sa zadovoljstvom reći da Edgar+ ima znatno gori kod nego ikada prije :D
+            </p>
+            <p>
+                Inače, za one koji se brinu - dobio sam <strong>izričitu dozvolu</strong> (a i čokoladu) <strong>od
+                    prof. Mekterovića da se
+                    ovaj extension SMIJE koristiti na ispitima i labosima</strong>, dakle dragi kolege i kolegice, samo
+                navalite!
+            </p>
+            <p>
+                Konačno, samo bi htio se osobno zahvaliti svim dragim kolegama i kolegicama koji su mi uz sve ovo
+                pravili veliko društvo na FERu (vi koji znate, znate), kolegama sa KSETove kompjuterske sekcije, kao i
+                tebi što si uzeo 5 sekundi da instaliraš moj mali hobij projekt. Nadam se da će ti svakako pomoći!
+            </p>
+            <p>
+                ~ Karlo
+            </p>
+        </div>
+
+        <!-- Changelog Section (Hidden Initially) -->
+        <div id="changelog-section" class="section hidden">
+            <p class="subtitle">Evo glavnih novih stvari u v1.1:</p>
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">👾</div>
+                    <h3>Fixani bugovi</h3>
+                    <p>Patchao bug koji bi slomio Edgar+ kada se učita element koji ne sadrži code editor (npr.
+                        šalabahter na kraju ispita ili tutoriali).</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Novi theme</h3>
+                    <p>Edgar+ sada ima novi theme koji liči na VSCodeov Monaco theme. Također uključuje i bojanje
+                        funkcija!</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <h3>Persistence</h3>
+                    <p>Edgar+ sada automatski sačuva kod koji pišeš! Šanse da ti se kod slomi su (NADAJMO SE) dosta
+                        manje!</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>Settings Sidebar</h3>
+                    <p>Edgar+ sada ima novi settings sidebar u kojem se nalaze sve postavke od prije. Bolji UX, kolege!
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎉</div>
+                    <h3>QoLovi</h3>
+                    <p>Zagrade se sada automatski bojaju po razini u kojima se nalaze! Također možeš upaliti
+                        "Highlight Brackets" feature da ti se dodatno označe zagrade u kojima programiraš.</p>
+                </div>
+            </div>
+        </div>
+
+        <button id="action-btn" class="btn">Okej, dakle što je novo?</button>
+
+        <div class="footer">
+            <p>Version 1.1 • Made with ❤️ for FER</p>
+        </div>
+    </div>
+
+    <script src="welcome.js"></script>
+</body>
+
+</html>

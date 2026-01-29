@@ -21,6 +21,29 @@ const styleUrl = myScript && myScript.dataset.styleUrl;
 
 debugLog("Edgar+ Params:", { aceBasePath, browserType, iconPlayUrl, iconPasteUrl, iconSaveUrl, iconDetachUrl, iconLoadUrl, styleUrl });
 
+// --- EXAM ID FETCHING ---
+const examIdPromise = new Promise((resolve) => {
+    // Only attempt fetch if we look like we are in an exam or generic run context
+    // We'll just try it. It's safer.
+    fetch('/exam/run/instance')
+        .then(res => {
+            if (!res.ok) throw new Error(res.statusText);
+            return res.json();
+        })
+        .then(data => {
+            if (data && data.idTestInstance) {
+                debugLog("Edgar+: Detected Exam ID:", data.idTestInstance);
+                resolve(data.idTestInstance);
+            } else {
+                resolve(null);
+            }
+        })
+        .catch(err => {
+            // debugLog("Edgar+: Not an exam instance or fetch failed", err);
+            resolve(null);
+        });
+});
+
 function waitForElement(selector, callback) {
     const element = document.querySelector(selector);
     if (element) {
@@ -42,13 +65,46 @@ function waitForElement(selector, callback) {
     });
 }
 
-function initAce(originalTextarea) {
+function watchForElement(selector, callback) {
+    // Check immediately
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(el => {
+        if (!el.dataset.edgarInitialized) {
+            el.dataset.edgarInitialized = 'true';
+            callback(el);
+        }
+    });
+
+    const observer = new MutationObserver((mutations) => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+            if (!el.dataset.edgarInitialized) {
+                el.dataset.edgarInitialized = 'true';
+                callback(el);
+            }
+        });
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+}
+
+async function initAce(originalTextarea) {
     debugLog("Edgar+: Found original editor:", originalTextarea);
+
+    // Wait for Exam ID to ensure correct storage key
+    const examId = await examIdPromise;
 
     let isSyncing = false;
 
     function getStorageKey() {
-        return 'edgar_plus_code_' + window.location.pathname + window.location.search;
+        let key = 'edgar_plus_code_' + window.location.pathname + window.location.search;
+        if (examId) {
+            key += '_exam_' + examId;
+        }
+        return key;
     }
 
     // The structure is:
@@ -56,10 +112,25 @@ function initAce(originalTextarea) {
     //    <div><textarea id="codeMirrorEditor"></div>
     //    <div class="CodeMirror">...</div>
     // </code-mirror>
-    
+
     // We want to hide the CodeMirror UI
     const codeMirrorElement = originalTextarea.closest('code-mirror');
     const oldUI = codeMirrorElement ? codeMirrorElement.querySelector('.CodeMirror') : null;
+
+    // --- NEW EXTRACTION LOGIC ---
+    let extractedInitialCode = "";
+    if (oldUI && oldUI.CodeMirror) {
+        extractedInitialCode = oldUI.CodeMirror.getValue();
+        debugLog("Edgar+: Extracted code from CodeMirror instance.");
+    } else if (oldUI) {
+        const lines = oldUI.querySelectorAll('.CodeMirror-line');
+        if (lines.length > 0) {
+            extractedInitialCode = Array.from(lines).map(line => line.textContent).join('\n');
+            // Remove zero-width spaces often used by CM
+            extractedInitialCode = extractedInitialCode.replace(/\u200b/g, '');
+            debugLog("Edgar+: Scraped code from DOM.");
+        }
+    }
 
     // Remove border/outline from the original container
     if (codeMirrorElement) {
@@ -71,8 +142,8 @@ function initAce(originalTextarea) {
 
         // Hide ALL children except our new ones
         Array.from(codeMirrorElement.children).forEach(child => {
-            if (child.id !== 'edgar-plus-toolbar' && 
-                child.id !== 'edgar-plus-ace-editor' && 
+            if (child.id !== 'edgar-plus-toolbar' &&
+                child.id !== 'edgar-plus-ace-editor' &&
                 child.id !== 'edgar-plus-footer') {
                 child.style.display = 'none';
             }
@@ -81,10 +152,10 @@ function initAce(originalTextarea) {
 
     // Also try the direct parent of the old UI, just in case it's an inner wrapper
     if (oldUI && oldUI.parentNode) {
-         oldUI.parentNode.style.setProperty('border', 'none', 'important');
-         oldUI.parentNode.style.setProperty('box-shadow', 'none', 'important');
-         oldUI.parentNode.style.setProperty('background', 'transparent', 'important');
-         oldUI.parentNode.style.setProperty('padding', '0', 'important');
+        oldUI.parentNode.style.setProperty('border', 'none', 'important');
+        oldUI.parentNode.style.setProperty('box-shadow', 'none', 'important');
+        oldUI.parentNode.style.setProperty('background', 'transparent', 'important');
+        oldUI.parentNode.style.setProperty('padding', '0', 'important');
     }
 
     // Capture height BEFORE hiding
@@ -102,7 +173,7 @@ function initAce(originalTextarea) {
     // Create the container for Ace
     const aceContainer = document.createElement('div');
     aceContainer.id = 'edgar-plus-ace-editor';
-    
+
     // Style it to match the container
     aceContainer.style.width = '100%';
     // Height is handled by minLines/maxLines in Ace options
@@ -143,55 +214,92 @@ function initAce(originalTextarea) {
     }
 
     // --- TIMER ENHANCEMENT ---
+    let cachedExamId = null;
+    examIdPromise.then(id => cachedExamId = id);
+
     function enhanceTimer() {
         const timer = document.getElementById('aii-countdown');
         if (!timer) return;
 
-        // Ensure we have our progress bar
-        let progressBar = timer.querySelector('.edgar-timer-progress');
-        if (!progressBar) {
-            // Create container for text and bar if needed, or just append bar
-            // The timer usually contains just text.
-            // Let's make the timer position relative so we can place the bar absolutely at bottom
-            timer.style.position = 'relative';
-            timer.style.overflow = 'hidden'; // To clip the bar
-            
-            progressBar = document.createElement('div');
-            progressBar.className = 'edgar-timer-progress';
-            timer.appendChild(progressBar);
-        }
+        // Style for visibility (Black text as requested)
+        timer.style.backgroundColor = 'transparent';
+        timer.style.color = '#000000';
+        timer.style.borderRadius = '4px';
+        timer.style.padding = '5px 10px';
+        timer.style.textAlign = 'center';
+        timer.style.minWidth = '120px';
 
         // Parse time
-        // Format: HH:MM:SS
-        // The text node is usually the first child, but let's be safe
-        const textNode = Array.from(timer.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.nodeValue.trim().length > 0);
-        if (!textNode) return;
+        // Format: HH:MM:SS or D days HH:MM:SS
+        // Use innerText to get visible text, ignoring HTML tags
+        const text = timer.innerText.trim();
 
-        const text = textNode.nodeValue.trim();
-        const parts = text.split(':').map(Number);
-        if (parts.length === 3) {
-            const seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
-            
-            // Store max time if not set
-            // We assume the first time we see is the max (or close to it)
-            // If the user refreshes, it resets to "full" relative to that moment.
-            if (!timer.dataset.maxSeconds) {
-                 timer.dataset.maxSeconds = seconds;
+        // Regex to find time: HH:MM:SS or MM:SS
+        // We look for at least one colon.
+        // If 2 colons: HH:MM:SS
+        // If 1 colon: MM:SS
+        const timeMatch = text.match(/(?:(\d+):)?(\d+):(\d+)/);
+        // Regex to find days: D days (optional)
+        const dayMatch = text.match(/(\d+)\s+days?/i);
+
+        if (timeMatch) {
+            // timeMatch[1] is hours (undefined if MM:SS), [2] is minutes, [3] is seconds
+            const h = timeMatch[1] ? parseInt(timeMatch[1]) : 0;
+            const m = parseInt(timeMatch[2]);
+            const s = parseInt(timeMatch[3]);
+
+            let seconds = h * 3600 + m * 60 + s;
+
+            if (dayMatch) {
+                seconds += parseInt(dayMatch[1]) * 86400; // Add days in seconds
             }
 
-            const max = parseInt(timer.dataset.maxSeconds);
+            // Max Time Logic
+            let max = 0;
+            if (cachedExamId) {
+                const key = 'edgar_timer_max_' + cachedExamId;
+                const stored = localStorage.getItem(key);
+                if (stored) {
+                    max = parseInt(stored);
+                } else {
+                    // First time seeing this exam
+                    max = seconds;
+                    localStorage.setItem(key, max);
+                }
+            } else {
+                // Fallback: use dataset on element (session based)
+                if (!timer.dataset.maxSeconds) {
+                    timer.dataset.maxSeconds = seconds;
+                }
+                max = parseInt(timer.dataset.maxSeconds);
+            }
+
             // Prevent division by zero
             const pct = max > 0 ? (seconds / max) * 100 : 0;
-            
-            progressBar.style.width = pct + '%';
-            
+
             // Color change based on percentage
+            let color = '#a6e22e'; // Green
             if (pct < 10) {
-                progressBar.style.backgroundColor = '#f92672'; // Red
+                color = '#f92672'; // Red
             } else if (pct < 30) {
-                progressBar.style.backgroundColor = '#fd971f'; // Orange
-            } else {
-                progressBar.style.backgroundColor = '#a6e22e'; // Green
+                color = '#fd971f'; // Orange
+            }
+
+            // Apply Gradient Background
+            // Background: [Progress Bar (Bottom 4px)] [Transparent (Rest)]
+            // Use setProperty with 'important' to fight inline style overwrites
+            const gradient = `linear-gradient(to right, ${color} ${pct}%, transparent ${pct}%) no-repeat bottom / 100% 4px`;
+
+            // CRITICAL: Check if changed to prevent infinite loop with MutationObserver
+            if (timer.dataset.lastGradient !== gradient) {
+                timer.style.setProperty('background', gradient, 'important');
+                timer.dataset.lastGradient = gradient;
+            }
+        } else {
+            // Fallback if parsing fails
+            if (timer.dataset.lastGradient !== 'transparent') {
+                timer.style.setProperty('background', 'transparent', 'important');
+                timer.dataset.lastGradient = 'transparent';
             }
         }
     }
@@ -200,21 +308,30 @@ function initAce(originalTextarea) {
     waitForElement('#aii-countdown', (timer) => {
         enhanceTimer(); // Initial run
         updateTimerVisibility(); // Ensure visibility is correct
-        const timerObserver = new MutationObserver(() => {
-            enhanceTimer();
-            // We don't need to call updateTimerVisibility here constantly unless the app resets style
-            // But enhanceTimer doesn't touch display.
-            // However, if the app re-renders the timer, it might lose the display:none style.
-            // So let's enforce it.
-            updateTimerVisibility();
+
+        // Use a flag to prevent recursive loops if we modify the DOM inside the callback
+        let isUpdating = false;
+
+        const timerObserver = new MutationObserver((mutations) => {
+            if (isUpdating) return;
+            isUpdating = true;
+
+            try {
+                enhanceTimer();
+                updateTimerVisibility();
+            } finally {
+                isUpdating = false;
+            }
         });
-        timerObserver.observe(timer, { childList: true, characterData: true, subtree: true });
+
+        // Added attributes: true to catch style changes
+        timerObserver.observe(timer, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
     });
 
     // --- FOOTER & BUTTON MIGRATION ---
     const footer = document.createElement('div');
     footer.id = 'edgar-plus-footer';
-    
+
     // Insert footer after Ace container
     aceContainer.parentNode.insertBefore(footer, aceContainer.nextSibling);
 
@@ -235,14 +352,14 @@ function initAce(originalTextarea) {
         img.src = iconUrl;
         img.style.width = '24px';
         img.style.height = '24px';
-        
+
         btn.appendChild(img);
         btn.addEventListener('click', onClick);
         return btn;
     }
 
     // Move/Hide buttons and create new ones
-    
+
     // Refactored replacement logic
     function replaceButtons() {
         const runBtnOriginal = document.querySelector('button[title="Ctrl+Enter"]');
@@ -258,13 +375,14 @@ function initAce(originalTextarea) {
             btnGroup.innerHTML = '';
 
             const runBtnNew = createBtn(iconPlayUrl, 'btn-success', 'Run (F5)', () => {
-                 syncToCodeMirror();
-                 clearAllAnnotations();
-                 if (runBtnOriginal) runBtnOriginal.click();
+                syncToCodeMirror();
+                clearAllAnnotations();
+                if (runBtnOriginal) runBtnOriginal.click();
             });
+            runBtnNew.id = 'edgar-plus-run-btn';
 
             const pasteRunBtn = createBtn(iconPasteUrl, 'btn-primary', 'Paste & Run (F1)', () => {
-                 if (navigator.clipboard && navigator.clipboard.readText) {
+                if (navigator.clipboard && navigator.clipboard.readText) {
                     navigator.clipboard.readText().then(text => {
                         if (text) {
                             editor.setValue(text, -1);
@@ -276,18 +394,46 @@ function initAce(originalTextarea) {
                         console.error("Edgar+: Clipboard error:", err);
                         alert("Edgar+: Please allow clipboard access.");
                     });
-                 }
+                }
             });
+            pasteRunBtn.id = 'edgar-plus-paste-btn';
 
-            const saveBtnNew = createBtn(iconSaveUrl, 'btn-warning', 'Save', () => {
-                 syncToCodeMirror();
-                 if (saveBtnOriginal) saveBtnOriginal.click();
+            const saveBtnNew = createBtn(iconSaveUrl, 'btn-warning', 'Save', (e) => {
+                // Animation Start
+                const btn = e.currentTarget;
+                const img = btn.querySelector('img');
+
+                // Prevent double clicks if already loading
+                if (btn.classList.contains('edgar-loading')) return;
+
+                btn.classList.add('edgar-loading');
+
+                // Swap icon to spinner (Load icon - circular arrow)
+                const originalSrc = img.src;
+                img.src = iconLoadUrl;
+                img.classList.add('edgar-spin');
+
+                syncToCodeMirror();
+                if (saveBtnOriginal) {
+                    debugLog("Edgar+: Clicking original Save button.");
+                    saveBtnOriginal.click();
+                } else {
+                    console.error("Edgar+: Original Save button not found during save!");
+                }
+
+                // Remove animation after 1 second
+                setTimeout(() => {
+                    btn.classList.remove('edgar-loading');
+                    img.classList.remove('edgar-spin');
+                    img.src = originalSrc;
+                }, 1000);
             });
+            saveBtnNew.id = 'edgar-plus-save-btn';
 
             btnGroup.appendChild(runBtnNew);
             btnGroup.appendChild(pasteRunBtn);
             btnGroup.appendChild(saveBtnNew);
-            
+
             return true; // Success
         }
         return false;
@@ -323,8 +469,8 @@ function initAce(originalTextarea) {
     }
 
     const editor = ace.edit("edgar-plus-ace-editor");
-    editor.setTheme("ace/theme/monokai");
-    
+    editor.setTheme("ace/theme/edgar_plus");
+
     // Enable Autocompletion & Auto-sizing
     editor.setOptions({
         enableBasicAutocompletion: true,
@@ -338,6 +484,7 @@ function initAce(originalTextarea) {
 
     // --- SETTINGS MODAL ---
     const themes = [
+        { name: "Edgar+ (Default)", value: "ace/theme/edgar_plus" },
         { name: "Ambiance", value: "ace/theme/ambiance" },
         { name: "Chaos", value: "ace/theme/chaos" },
         { name: "Chrome", value: "ace/theme/chrome" },
@@ -379,69 +526,100 @@ function initAce(originalTextarea) {
 
     const themeOptions = themes.map(t => `<option value="${t.value}">${t.name}</option>`).join('');
 
-    const modal = document.createElement('div');
-    modal.id = 'edgar-plus-settings-modal';
-    modal.innerHTML = `
-        <div class="edgar-plus-modal-content">
-            <div class="edgar-plus-modal-header">
-                <span class="edgar-plus-modal-title">Edgar+ Settings</span>
-                <button class="edgar-plus-close-btn">&times;</button>
+    // --- SIDEBAR MENU ---
+    const sidebarOverlay = document.createElement('div');
+    sidebarOverlay.className = 'edgar-plus-sidebar-overlay';
+    document.body.appendChild(sidebarOverlay);
+
+    const sidebar = document.createElement('div');
+    sidebar.id = 'edgar-plus-sidebar';
+    sidebar.innerHTML = `
+        <div class="edgar-plus-sidebar-header">
+            <span>Edgar+ Menu</span>
+            <button class="edgar-plus-close-sidebar-btn">&times;</button>
+        </div>
+        <div class="edgar-plus-sidebar-content">
+            <div class="edgar-plus-sidebar-section">Settings</div>
+            
+            <div class="edgar-plus-setting-item">
+                <span class="edgar-plus-setting-label">Theme</span>
+                <select id="edgar-plus-setting-theme" style="background: #444; color: #fff; border: 1px solid #555; border-radius: 3px; padding: 2px 5px;">
+                    ${themeOptions}
+                </select>
             </div>
-            <div class="edgar-plus-modal-body">
-                <div class="edgar-plus-setting-item">
-                    <span class="edgar-plus-setting-label">Theme</span>
-                    <select id="edgar-plus-setting-theme" style="background: #444; color: #fff; border: 1px solid #555; border-radius: 3px; padding: 2px 5px;">
-                        ${themeOptions}
-                    </select>
-                </div>
-                <div class="edgar-plus-setting-item">
-                    <span class="edgar-plus-setting-label">Vim Mode</span>
-                    <label class="edgar-plus-switch">
-                        <input type="checkbox" id="edgar-plus-setting-vim">
-                        <span class="edgar-plus-slider"></span>
-                    </label>
-                </div>
-                <div class="edgar-plus-setting-item">
-                    <span class="edgar-plus-setting-label">Auto-Close Brackets</span>
-                    <label class="edgar-plus-switch">
-                        <input type="checkbox" id="edgar-plus-setting-brackets" checked>
-                        <span class="edgar-plus-slider"></span>
-                    </label>
-                </div>
-                 <div class="edgar-plus-setting-item">
-                    <span class="edgar-plus-setting-label">Show Invisibles</span>
-                    <label class="edgar-plus-switch">
-                        <input type="checkbox" id="edgar-plus-setting-invisibles">
-                        <span class="edgar-plus-slider"></span>
-                    </label>
-                </div>
-                <div class="edgar-plus-setting-item">
-                    <span class="edgar-plus-setting-label">Hide Output Marks</span>
-                    <label class="edgar-plus-switch">
-                        <input type="checkbox" id="edgar-plus-setting-clean-output">
-                        <span class="edgar-plus-slider"></span>
-                    </label>
-                </div>
-                <div class="edgar-plus-setting-item">
-                    <span class="edgar-plus-setting-label">Hide Timer</span>
-                    <label class="edgar-plus-switch">
-                        <input type="checkbox" id="edgar-plus-setting-hide-timer">
-                        <span class="edgar-plus-slider"></span>
-                    </label>
-                </div>
+            <div class="edgar-plus-setting-item">
+                <span class="edgar-plus-setting-label">Vim Mode</span>
+                <label class="edgar-plus-switch">
+                    <input type="checkbox" id="edgar-plus-setting-vim">
+                    <span class="edgar-plus-slider"></span>
+                </label>
+            </div>
+            <div class="edgar-plus-setting-item">
+                <span class="edgar-plus-setting-label">Auto-Close Brackets</span>
+                <label class="edgar-plus-switch">
+                    <input type="checkbox" id="edgar-plus-setting-brackets" checked>
+                    <span class="edgar-plus-slider"></span>
+                </label>
+            </div>
+             <div class="edgar-plus-setting-item">
+                <span class="edgar-plus-setting-label">Show Invisibles</span>
+                <label class="edgar-plus-switch">
+                    <input type="checkbox" id="edgar-plus-setting-invisibles">
+                    <span class="edgar-plus-slider"></span>
+                </label>
+            </div>
+            <div class="edgar-plus-setting-item">
+                <span class="edgar-plus-setting-label">Hide Output Marks</span>
+                <label class="edgar-plus-switch">
+                    <input type="checkbox" id="edgar-plus-setting-clean-output">
+                    <span class="edgar-plus-slider"></span>
+                </label>
+            </div>
+            <div class="edgar-plus-setting-item">
+                <span class="edgar-plus-setting-label">Hide Timer</span>
+                <label class="edgar-plus-switch">
+                    <input type="checkbox" id="edgar-plus-setting-hide-timer">
+                    <span class="edgar-plus-slider"></span>
+                </label>
+            </div>
+            <div class="edgar-plus-setting-item">
+                <span class="edgar-plus-setting-label">Rainbow Brackets</span>
+                <label class="edgar-plus-switch">
+                    <input type="checkbox" id="edgar-plus-setting-rainbow-brackets" checked>
+                    <span class="edgar-plus-slider"></span>
+                </label>
+            </div>
+            <div class="edgar-plus-setting-item">
+                <span class="edgar-plus-setting-label">Highlight Brackets</span>
+                <label class="edgar-plus-switch">
+                    <input type="checkbox" id="edgar-plus-setting-highlight-brackets">
+                    <span class="edgar-plus-slider"></span>
+                </label>
+            </div>
+
+            <div class="edgar-plus-sidebar-section">Links</div>
+            <div class="edgar-plus-setting-item">
+                <a href="https://github.com/OctaNebula/EdgarPlus" target="_blank" style="color: #66d9ef; text-decoration: none; display: flex; align-items: center; gap: 10px;">
+                    <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                    </svg>
+                    GitHub Repository
+                </a>
             </div>
         </div>
     `;
-    document.body.appendChild(modal);
+    document.body.appendChild(sidebar);
 
     const settingsBtn = toolbar.querySelector('#edgar-plus-settings-btn');
-    const closeBtn = modal.querySelector('.edgar-plus-close-btn');
-    const themeSelect = modal.querySelector('#edgar-plus-setting-theme');
-    const vimToggle = modal.querySelector('#edgar-plus-setting-vim');
-    const bracketsToggle = modal.querySelector('#edgar-plus-setting-brackets');
-    const invisiblesToggle = modal.querySelector('#edgar-plus-setting-invisibles');
-    const cleanOutputToggle = modal.querySelector('#edgar-plus-setting-clean-output');
-    const hideTimerToggle = modal.querySelector('#edgar-plus-setting-hide-timer');
+    const closeBtn = sidebar.querySelector('.edgar-plus-close-sidebar-btn');
+    const themeSelect = sidebar.querySelector('#edgar-plus-setting-theme');
+    const vimToggle = sidebar.querySelector('#edgar-plus-setting-vim');
+    const bracketsToggle = sidebar.querySelector('#edgar-plus-setting-brackets');
+    const invisiblesToggle = sidebar.querySelector('#edgar-plus-setting-invisibles');
+    const cleanOutputToggle = sidebar.querySelector('#edgar-plus-setting-clean-output');
+    const hideTimerToggle = sidebar.querySelector('#edgar-plus-setting-hide-timer');
+    const rainbowBracketsToggle = sidebar.querySelector('#edgar-plus-setting-rainbow-brackets');
+    const highlightBracketsToggle = sidebar.querySelector('#edgar-plus-setting-highlight-brackets');
     const langSelect = toolbar.querySelector('#edgar-plus-lang-select');
     const zoomInBtn = toolbar.querySelector('#edgar-plus-zoom-in');
     const zoomOutBtn = toolbar.querySelector('#edgar-plus-zoom-out');
@@ -480,7 +658,7 @@ function initAce(originalTextarea) {
         }
 
         detachedWindow = window.open("", "EdgarPlusDetached", `width=${width},height=${height},left=${left},top=${top}`);
-        
+
         if (!detachedWindow) {
             // If popup blocked, restore
             if (overlapContainer) overlapContainer.style.display = '';
@@ -731,16 +909,16 @@ function initAce(originalTextarea) {
             const popupAce = detachedWindow.ace;
             const popupEditor = popupAce.edit("edgar-plus-ace-editor");
             detachedWindow.edgarEditor = popupEditor; // Expose for main window
-            
+
             // Sync Theme
-            const currentTheme = localStorage.getItem('edgar_plus_theme') || 'ace/theme/monokai';
+            const currentTheme = localStorage.getItem('edgar_plus_theme') || 'ace/theme/edgar_plus';
             popupEditor.setTheme(currentTheme);
-            
+
             // Sync mode
             const currentMode = langSelect.value;
-            popupEditor.session.setMode(currentMode); 
+            popupEditor.session.setMode(currentMode);
             popupEditor.setValue(editor.getValue(), -1); // Sync content
-            
+
             // Sync Settings
             popupEditor.setOptions({
                 enableBasicAutocompletion: true,
@@ -750,7 +928,7 @@ function initAce(originalTextarea) {
                 showPrintMargin: false,
                 fontFamily: "Consolas, 'Courier New', monospace" // Force Consolas
             });
-            
+
             if (editor.getKeyboardHandler() === "ace/keyboard/vim") {
                 popupEditor.setKeyboardHandler("ace/keyboard/vim");
             }
@@ -761,7 +939,7 @@ function initAce(originalTextarea) {
             const pZoomIn = pDoc.getElementById('edgar-plus-zoom-in');
             const pZoomOut = pDoc.getElementById('edgar-plus-zoom-out');
             const pZoomLevel = pDoc.getElementById('edgar-plus-zoom-level');
-            
+
             const BASE_FONT_SIZE = 14;
 
             function getPopupZoomPercentage() {
@@ -793,7 +971,7 @@ function initAce(originalTextarea) {
                 pZoomLevel.style.textAlign = 'center';
                 pZoomLevel.style.fontFamily = 'monospace';
                 pZoomLevel.style.color = '#fff';
-                
+
                 pZoomLevel.addEventListener('click', () => {
                     if (pZoomLevel.querySelector('input')) return; // Already editing
 
@@ -822,7 +1000,7 @@ function initAce(originalTextarea) {
                         // Remove % if present
                         val = val.replace('%', '');
                         let num = parseInt(val, 10);
-                        
+
                         if (!isNaN(num)) {
                             setPopupZoom(num);
                         } else {
@@ -865,32 +1043,32 @@ function initAce(originalTextarea) {
             // Sync Back to Main
             popupEditor.session.on('change', () => {
                 if (isUpdatingFromMain) return; // Don't reflect back if main caused it
-                
+
                 isUpdatingFromPopup = true;
                 const val = popupEditor.getValue();
                 if (editor.getValue() !== val) {
                     editor.setValue(val, 1); // Update main, cursor pos doesn't matter as it's hidden
                     // Trigger sync to textarea
-                    syncToCodeMirror(); 
+                    syncToCodeMirror();
                 }
                 isUpdatingFromPopup = false;
             });
 
             // Sync Main to Popup (if main changes for some reason)
             const mainChangeListener = () => {
-                 if (isUpdatingFromPopup) return; // Don't reflect back if popup caused it
-                 
-                 if (detachedWindow && !detachedWindow.closed) {
-                     isUpdatingFromMain = true;
-                     const val = editor.getValue();
-                     if (popupEditor.getValue() !== val) {
-                         // Preserve cursor if possible
-                         const cursor = popupEditor.getCursorPosition();
-                         popupEditor.setValue(val, -1);
-                         popupEditor.moveCursorToPosition(cursor);
-                     }
-                     isUpdatingFromMain = false;
-                 }
+                if (isUpdatingFromPopup) return; // Don't reflect back if popup caused it
+
+                if (detachedWindow && !detachedWindow.closed) {
+                    isUpdatingFromMain = true;
+                    const val = editor.getValue();
+                    if (popupEditor.getValue() !== val) {
+                        // Preserve cursor if possible
+                        const cursor = popupEditor.getCursorPosition();
+                        popupEditor.setValue(val, -1);
+                        popupEditor.moveCursorToPosition(cursor);
+                    }
+                    isUpdatingFromMain = false;
+                }
             };
             editor.session.on('change', mainChangeListener);
 
@@ -905,7 +1083,7 @@ function initAce(originalTextarea) {
                 // Ensure final sync
                 editor.setValue(popupEditor.getValue(), -1);
                 syncToCodeMirror();
-                
+
                 // Restore Main Editor Interaction
                 aceContainer.style.display = 'block';
                 toolbar.style.display = 'flex';
@@ -916,26 +1094,26 @@ function initAce(originalTextarea) {
                 if (overlapContainer) {
                     overlapContainer.style.display = '';
                 }
-                
+
                 // Remove listener
                 // editor.session.removeListener('change', mainChangeListener); // Ace doesn't have removeListener easily exposed like this usually, but it's fine for now.
             };
 
             // Add Footer Buttons to Popup
             const btnGroup = doc.querySelector('.edgar-plus-btn-group');
-            
+
             // Helper for popup buttons
             function createPopupBtn(iconUrl, colorClass, title, onClick) {
-                 const btn = doc.createElement('button');
-                 btn.className = `btn ${colorClass} edgar-plus-square-btn`;
-                 btn.setAttribute('data-tooltip', title);
-                 const img = doc.createElement('img');
-                 img.src = iconUrl;
-                 img.style.width = '24px';
-                 img.style.height = '24px';
-                 btn.appendChild(img);
-                 btn.addEventListener('click', onClick);
-                 return btn;
+                const btn = doc.createElement('button');
+                btn.className = `btn ${colorClass} edgar-plus-square-btn`;
+                btn.setAttribute('data-tooltip', title);
+                const img = doc.createElement('img');
+                img.src = iconUrl;
+                img.style.width = '24px';
+                img.style.height = '24px';
+                btn.appendChild(img);
+                btn.addEventListener('click', onClick);
+                return btn;
             }
 
             // Run
@@ -944,7 +1122,7 @@ function initAce(originalTextarea) {
                 // Trigger main window run
                 const runBtnOriginal = document.querySelector('button[title="Ctrl+Enter"]');
                 if (runBtnOriginal) runBtnOriginal.click();
-                
+
                 // Manually trigger loading state in popup immediately (main window will sync it shortly, but this feels faster)
                 const popupRunBtn = pDoc.querySelector('button[data-tooltip="Run (F5)"]');
                 if (popupRunBtn) {
@@ -959,31 +1137,31 @@ function initAce(originalTextarea) {
 
             // Paste & Run (Popup clipboard)
             btnGroup.appendChild(createPopupBtn(iconPasteUrl, 'btn-primary', 'Paste & Run (F1)', () => {
-                 if (detachedWindow.navigator.clipboard) {
-                     detachedWindow.navigator.clipboard.readText().then(text => {
-                         if (text) {
-                             popupEditor.setValue(text, -1);
-                             // Sync happens automatically via change listener
-                             // Trigger run
-                             setTimeout(() => {
-                                 clearAllAnnotations();
-                                 const runBtnOriginal = document.querySelector('button[title="Ctrl+Enter"]');
-                                 if (runBtnOriginal) runBtnOriginal.click();
-                             }, 100);
-                         }
-                     });
-                 }
+                if (detachedWindow.navigator.clipboard) {
+                    detachedWindow.navigator.clipboard.readText().then(text => {
+                        if (text) {
+                            popupEditor.setValue(text, -1);
+                            // Sync happens automatically via change listener
+                            // Trigger run
+                            setTimeout(() => {
+                                clearAllAnnotations();
+                                const runBtnOriginal = document.querySelector('button[title="Ctrl+Enter"]');
+                                if (runBtnOriginal) runBtnOriginal.click();
+                            }, 100);
+                        }
+                    });
+                }
             }));
 
             // Save
             btnGroup.appendChild(createPopupBtn(iconSaveUrl, 'btn-warning', 'Save', () => {
-                 const allButtons = Array.from(document.querySelectorAll('button'));
-                 const saveBtnOriginal = allButtons.find(b => b.textContent.trim() === 'Save');
-                 if (saveBtnOriginal) saveBtnOriginal.click();
+                const allButtons = Array.from(document.querySelectorAll('button'));
+                const saveBtnOriginal = allButtons.find(b => b.textContent.trim() === 'Save');
+                if (saveBtnOriginal) saveBtnOriginal.click();
             }));
-            
+
             // Hotkeys in Popup
-            doc.addEventListener('keydown', function(e) {
+            doc.addEventListener('keydown', function (e) {
                 if (e.key === 'F5') {
                     e.preventDefault();
                     clearAllAnnotations();
@@ -993,26 +1171,26 @@ function initAce(originalTextarea) {
                 if (e.key === 'F1') {
                     e.preventDefault();
                     // Paste & Run logic
-                     if (detachedWindow.navigator.clipboard) {
-                         detachedWindow.navigator.clipboard.readText().then(text => {
-                             if (text) {
-                                 popupEditor.setValue(text, -1);
-                                 setTimeout(() => {
-                                     clearAllAnnotations();
-                                     const runBtnOriginal = document.querySelector('button[title="Ctrl+Enter"]');
-                                     if (runBtnOriginal) runBtnOriginal.click();
-                                 }, 100);
-                             }
-                         });
-                     }
+                    if (detachedWindow.navigator.clipboard) {
+                        detachedWindow.navigator.clipboard.readText().then(text => {
+                            if (text) {
+                                popupEditor.setValue(text, -1);
+                                setTimeout(() => {
+                                    clearAllAnnotations();
+                                    const runBtnOriginal = document.querySelector('button[title="Ctrl+Enter"]');
+                                    if (runBtnOriginal) runBtnOriginal.click();
+                                }, 100);
+                            }
+                        });
+                    }
                 }
             });
 
             // Rebind F1 to Ctrl+P (Command Palette) in Popup
             popupEditor.commands.addCommand({
                 name: "openCommandPalette",
-                bindKey: {win: "Ctrl-P", mac: "Command-P"},
-                exec: function(editor) {
+                bindKey: { win: "Ctrl-P", mac: "Command-P" },
+                exec: function (editor) {
                     editor.execCommand("openCommandPalette");
                 }
             });
@@ -1025,31 +1203,15 @@ function initAce(originalTextarea) {
         };
     });
 
-    // Open Modal
-    settingsBtn.addEventListener('click', () => {
-        modal.style.display = 'flex';
-        // Force reflow to enable transition
-        void modal.offsetWidth;
-        modal.classList.add('show');
-    });
-
-    // Close Modal Helper
-    function closeModal() {
-        modal.classList.remove('show');
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 200); // Match CSS transition
+    // Toggle Sidebar
+    function toggleSidebar() {
+        sidebar.classList.toggle('open');
+        sidebarOverlay.classList.toggle('open');
     }
 
-    // Close Modal
-    closeBtn.addEventListener('click', closeModal);
-
-    // Close on click outside
-    window.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeModal();
-        }
-    });
+    settingsBtn.addEventListener('click', toggleSidebar);
+    closeBtn.addEventListener('click', toggleSidebar);
+    sidebarOverlay.addEventListener('click', toggleSidebar);
 
     // --- SETTINGS LOGIC ---
     // Load Settings
@@ -1083,7 +1245,7 @@ function initAce(originalTextarea) {
 
     // Load saved settings
     const savedMode = localStorage.getItem('edgar_plus_mode') || 'ace/mode/c_cpp';
-    const savedTheme = localStorage.getItem('edgar_plus_theme') || 'ace/theme/monokai';
+    const savedTheme = localStorage.getItem('edgar_plus_theme') || 'ace/theme/edgar_plus';
     const savedFontSize = parseInt(localStorage.getItem('edgar_plus_fontsize')) || 14;
 
     // Apply settings
@@ -1092,7 +1254,7 @@ function initAce(originalTextarea) {
     editor.setFontSize(savedFontSize);
     langSelect.value = savedMode;
     themeSelect.value = savedTheme;
-    
+
     const BASE_FONT_SIZE = 14;
 
     function getZoomPercentage() {
@@ -1115,11 +1277,25 @@ function initAce(originalTextarea) {
     }
     updateZoomDisplay();
 
+    // Zoom Buttons
+    if (zoomInBtn) {
+        zoomInBtn.addEventListener('click', () => {
+            const current = getZoomPercentage();
+            setZoom(current + 10);
+        });
+    }
+    if (zoomOutBtn) {
+        zoomOutBtn.addEventListener('click', () => {
+            const current = getZoomPercentage();
+            setZoom(current - 10);
+        });
+    }
+
     // Make zoom span interactive
     if (zoomLevelSpan) {
         zoomLevelSpan.style.cursor = 'pointer';
         zoomLevelSpan.title = 'Click to set custom zoom';
-        
+
         zoomLevelSpan.addEventListener('click', () => {
             if (zoomLevelSpan.querySelector('input')) return; // Already editing
 
@@ -1148,7 +1324,7 @@ function initAce(originalTextarea) {
                 // Remove % if present
                 val = val.replace('%', '');
                 let num = parseInt(val, 10);
-                
+
                 if (!isNaN(num)) {
                     setZoom(num);
                 } else {
@@ -1172,62 +1348,222 @@ function initAce(originalTextarea) {
         const theme = e.target.value;
         editor.setTheme(theme);
         localStorage.setItem('edgar_plus_theme', theme);
-        
+
+        updateUITheme(theme);
+
         // Sync to detached window if open
         if (detachedWindow && !detachedWindow.closed && detachedWindow.edgarEditor) {
             detachedWindow.edgarEditor.setTheme(theme);
         }
     });
 
+    // --- UI THEME SYNC ---
+    function updateUITheme(themePath) {
+        // Simple heuristic: Most Ace themes have "dark" or "light" in name, 
+        // or we check specific known dark themes.
+        // Default to dark for "safe" themes (Monokai, Twilight, etc.)
+        const knownLightThemes = [
+            "ace/theme/chrome", "ace/theme/clouds", "ace/theme/crimson_editor",
+            "ace/theme/dawn", "ace/theme/dreamweaver", "ace/theme/eclipse",
+            "ace/theme/github", "ace/theme/iplastic", "ace/theme/katzenmilch",
+            "ace/theme/kuroir", "ace/theme/solarized_light", "ace/theme/sqlserver",
+            "ace/theme/textmate", "ace/theme/tomorrow", "ace/theme/xcode"
+        ];
+
+        const isLight = knownLightThemes.includes(themePath);
+
+        // Colors
+        const bg = isLight ? '#f0f0f0' : '#2F3129';
+        const fg = isLight ? '#333' : '#f8f8f2';
+        const border = isLight ? '#ccc' : '#444';
+        const btnBg = isLight ? '#e0e0e0' : '#444';
+        const btnHover = isLight ? '#d0d0d0' : '#555';
+
+        // Apply to Toolbar
+        if (toolbar) {
+            toolbar.style.backgroundColor = bg;
+            toolbar.style.color = fg;
+            toolbar.style.borderColor = border;
+
+            // Toolbar buttons
+            const buttons = toolbar.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.style.backgroundColor = btnBg;
+                btn.style.color = fg;
+                btn.style.borderColor = isLight ? '#bbb' : '#555';
+            });
+
+            // Language Select
+            const select = toolbar.querySelector('select');
+            if (select) {
+                select.style.backgroundColor = btnBg;
+                select.style.color = fg;
+                select.style.borderColor = isLight ? '#bbb' : '#555';
+            }
+        }
+
+        // Apply to Footer
+        if (footer) {
+            footer.style.backgroundColor = bg;
+            footer.style.color = fg;
+            footer.style.borderColor = border;
+        }
+
+        // Apply to Sidebar
+        if (sidebar) {
+            sidebar.style.backgroundColor = bg;
+            sidebar.style.color = fg;
+            sidebar.style.borderLeftColor = border;
+
+            sidebar.querySelectorAll('.edgar-plus-sidebar-header').forEach(el => {
+                el.style.borderBottomColor = border;
+                el.style.color = fg;
+            });
+            sidebar.querySelectorAll('.edgar-plus-sidebar-section').forEach(el => {
+                el.style.borderBottomColor = border;
+            });
+            sidebar.querySelectorAll('.edgar-plus-setting-label').forEach(el => {
+                el.style.color = fg; // Update label color
+            });
+        }
+    }
+
+    // Initialize UI Theme
+    setTimeout(() => updateUITheme(localStorage.getItem('edgar_plus_theme') || 'ace/theme/edgar_plus'), 500);
+
+    // --- RAINBOW BRACKETS ---
+    let rainbowEnabled = false;
+
+    function applyRainbowColors() {
+        if (!rainbowEnabled) return;
+
+        const session = editor.session;
+        const len = session.getLength();
+
+        // Performance safety: Limit to reasonable file size
+        if (len > 5000) return;
+
+        let depth = 0;
+
+        // Full scan to ensure accurate depth
+        // Full scan to ensure accurate depth
+
+        for (let r = 0; r < len; r++) {
+            // Use cached tokens directly if possible to persist our changes against bgTokenizer updates
+            let tokens = session.bgTokenizer.lines[r];
+            if (!tokens) {
+                tokens = session.getTokens(r);
+            }
+            if (!tokens) continue;
+
+            let newTokens = [];
+            let lineModified = false;
+
+            // Pass 1: Split merged bracket tokens if necessary
+            for (let i = 0; i < tokens.length; i++) {
+                const t = tokens[i];
+                const isParen = t.type.indexOf('paren.lparen') > -1 || t.type.indexOf('paren.rparen') > -1;
+
+                // If token contains multiple logic characters, we must split it
+                if (isParen && t.value.length > 1) {
+                    const chars = t.value.split('');
+                    chars.forEach(char => {
+                        newTokens.push({
+                            type: t.type, // Inherit base style
+                            value: char
+                        });
+                    });
+                    lineModified = true;
+                } else {
+                    newTokens.push(t);
+                }
+            }
+
+            // Pass 2: Apply depth classes to the (potentially new) token list
+            newTokens.forEach(t => {
+                if (t.type.indexOf('paren.lparen') > -1) {
+                    let newType = t.type.replace(/ ?edgar-depth-\d+/g, '');
+                    newType = `${newType} edgar-depth-${depth % 3}`;
+                    if (t.type !== newType) {
+                        t.type = newType;
+                        lineModified = true;
+                    }
+                    depth++;
+                } else if (t.type.indexOf('paren.rparen') > -1) {
+                    depth--;
+                    if (depth < 0) depth = 0;
+                    let newType = t.type.replace(/ ?edgar-depth-\d+/g, '');
+                    newType = `${newType} edgar-depth-${depth % 3}`;
+                    if (t.type !== newType) {
+                        t.type = newType;
+                        lineModified = true;
+                    }
+                }
+            });
+
+            // Update cache if we modified structure or classes
+            if (lineModified) {
+                session.bgTokenizer.lines[r] = newTokens;
+            }
+        }
+
+        // Force redraw of text layer to pick up new classes
+        editor.renderer.updateText();
+    }
+
+    const debouncedRainbowUpdate = (() => {
+        let timer;
+        return () => {
+            clearTimeout(timer);
+            // Wait for Ace's internal tokenizer to finish
+            timer = setTimeout(() => {
+                applyRainbowColors();
+            }, 50);
+        };
+    })();
+
+    function enableRainbowBrackets() {
+        if (rainbowEnabled) return;
+        rainbowEnabled = true;
+
+        // Initial apply
+        applyRainbowColors();
+
+        // Hook into changes and updates
+        editor.session.bgTokenizer.on('update', debouncedRainbowUpdate);
+        editor.session.on('change', debouncedRainbowUpdate);
+    }
+
+    function disableRainbowBrackets() {
+        rainbowEnabled = false;
+        editor.session.bgTokenizer.removeListener('update', debouncedRainbowUpdate);
+        editor.session.removeListener('change', debouncedRainbowUpdate);
+
+        // Clean up
+        const session = editor.session;
+        const len = session.getLength();
+        for (let r = 0; r < len; r++) {
+            const tokens = session.getTokens(r);
+            tokens.forEach(t => {
+                t.type = t.type.replace(/ ?edgar-depth-\d+/g, '');
+            });
+        }
+        editor.renderer.updateText();
+    }
+
+    // Init Rainbow
+    if (localStorage.getItem('edgar_plus_rainbow_brackets') !== 'false') {
+        try {
+            enableRainbowBrackets();
+        } catch (err) {
+            console.error("Edgar+: Rainbow Init Error:", err);
+        }
+    }
+
     langSelect.addEventListener('change', (e) => {
         const mode = e.target.value;
         editor.session.setMode(mode);
         localStorage.setItem('edgar_plus_mode', mode);
-    });
-
-    zoomInBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const currentPct = getZoomPercentage();
-        setZoom(currentPct + 5);
-    });
-
-    zoomOutBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const currentPct = getZoomPercentage();
-        setZoom(currentPct - 5);
-    });
-
-    // Event Listeners for Toggles
-    vimToggle.addEventListener('change', (e) => {
-        const isEnabled = e.target.checked;
-        if (isEnabled) {
-            editor.setKeyboardHandler("ace/keyboard/vim");
-        } else {
-            editor.setKeyboardHandler(null);
-        }
-        localStorage.setItem('edgar_plus_vim', isEnabled);
-    });
-
-    bracketsToggle.addEventListener('change', (e) => {
-        const isEnabled = e.target.checked;
-        editor.setBehavioursEnabled(isEnabled);
-        localStorage.setItem('edgar_plus_brackets', isEnabled);
-    });
-
-    invisiblesToggle.addEventListener('change', (e) => {
-        const isEnabled = e.target.checked;
-        editor.setShowInvisibles(isEnabled);
-        localStorage.setItem('edgar_plus_invisibles', isEnabled);
-    });
-
-    cleanOutputToggle.addEventListener('change', (e) => {
-        const isEnabled = e.target.checked;
-        localStorage.setItem('edgar_plus_clean_output', isEnabled);
-        if (isEnabled) {
-            cleanOutput();
-        } else {
-            restoreOutput();
-        }
     });
 
     hideTimerToggle.addEventListener('change', (e) => {
@@ -1236,10 +1572,37 @@ function initAce(originalTextarea) {
         updateTimerVisibility();
     });
 
+    rainbowBracketsToggle.addEventListener('change', (e) => {
+        const isEnabled = e.target.checked;
+        localStorage.setItem('edgar_plus_rainbow_brackets', isEnabled);
+        try {
+            if (isEnabled) enableRainbowBrackets();
+            else disableRainbowBrackets();
+        } catch (err) {
+            console.error("Edgar+: Rainbow Brackets Error:", err);
+        }
+    });
+
+    highlightBracketsToggle.addEventListener('change', (e) => {
+        const isEnabled = e.target.checked;
+        localStorage.setItem('edgar_plus_highlight_brackets', isEnabled);
+        // Force via class on body to ensure global coverage
+        if (isEnabled) document.body.classList.remove('edgar-hide-bracket-match');
+        else document.body.classList.add('edgar-hide-bracket-match');
+    });
+
     // --- PERSISTENCE ---
     // Initial Load
     const initialKey = getStorageKey();
+
+    // Init Highlight Brackets (Default Off)
+    const highlightBrackets = localStorage.getItem('edgar_plus_highlight_brackets') === 'true';
+    if (highlightBrackets) document.body.classList.remove('edgar-hide-bracket-match');
+    else document.body.classList.add('edgar-hide-bracket-match');
+    highlightBracketsToggle.checked = highlightBrackets;
+
     let savedCode = localStorage.getItem(initialKey);
+    const isTutorial = window.location.href.includes('/tutorial/');
 
     // Fix: If saved code is just whitespace (e.g. the 13 newlines), treat it as empty string
     if (typeof savedCode === 'string' && savedCode.trim().length === 0) {
@@ -1247,20 +1610,26 @@ function initAce(originalTextarea) {
         localStorage.setItem(initialKey, ""); // Clean up storage
     }
 
-    if (savedCode !== null) {
+    if (savedCode !== null && savedCode !== "") {
         editor.setValue(savedCode.trim(), -1);
         debugLog("Edgar+: Restored unsaved code from local storage.");
         setTimeout(syncToCodeMirror, 0);
     } else {
-        // Remove Edgar's default 13 newlines
-        const cleanCode = originalTextarea.value ? originalTextarea.value.trim() : "";
+        // Use extracted code if available, else textarea value
+        let cleanCode = "";
+        if (extractedInitialCode && extractedInitialCode.trim().length > 0) {
+            cleanCode = extractedInitialCode.trim();
+            debugLog("Edgar+: Initialized with code from page (Tutorial/Exam).");
+        } else {
+            cleanCode = originalTextarea.value ? originalTextarea.value.trim() : "";
+        }
         editor.setValue(cleanCode, -1);
     }
 
     // --- SYNC LOGIC ---
     function syncToCodeMirror() {
         const newValue = editor.getValue();
-        
+
         // 1. Try to update the CodeMirror instance directly (Most reliable)
         if (oldUI && oldUI.CodeMirror) {
             const currentCMValue = oldUI.CodeMirror.getValue();
@@ -1268,6 +1637,10 @@ function initAce(originalTextarea) {
                 isSyncing = true;
                 oldUI.CodeMirror.setValue(newValue);
                 isSyncing = false;
+            }
+            // FORCE SAVE to textarea (Critical for form submission/validation)
+            if (typeof oldUI.CodeMirror.save === 'function') {
+                oldUI.CodeMirror.save();
             }
         }
 
@@ -1284,7 +1657,7 @@ function initAce(originalTextarea) {
 
     function setRunLoading(isLoading) {
         const runBtn = document.querySelector('button[data-tooltip="Run (F5)"]');
-        
+
         // Helper to update a specific button
         const updateBtn = (btn) => {
             if (!btn) return;
@@ -1335,7 +1708,7 @@ function initAce(originalTextarea) {
         // Regex for GCC/Clang style errors: main.c:4:24: error: ...
         // Also handle: main.c:4: error: ...
         const regex = /main\.c:(\d+)(?::(\d+))?:\s*(error|warning|note):\s*(.*)/g;
-        
+
         let match;
         while ((match = regex.exec(text)) !== null) {
             const line = parseInt(match[1], 10) - 1; // Ace is 0-indexed
@@ -1399,7 +1772,7 @@ function initAce(originalTextarea) {
         try {
             // Target Compiler Output
             const compilerOutput = document.querySelectorAll('clang-result table.table-striped tr td:nth-child(3)');
-            
+
             // Target Test Results (stdin, stdout, expected)
             const testResults = document.querySelectorAll('table.code-results td.edgar-code');
 
@@ -1407,11 +1780,11 @@ function initAce(originalTextarea) {
 
             allTargets.forEach(cell => {
                 const currentHtml = cell.innerHTML;
-                
+
                 if (cell.hasAttribute('data-original-html')) {
                     const original = cell.getAttribute('data-original-html');
                     const expectedClean = getCleanedHtml(original);
-                    
+
                     // If current HTML matches what we expect it to be (cleaned), do nothing
                     // If it doesn't match, the content must have changed externally.
                     if (currentHtml !== expectedClean) {
@@ -1438,10 +1811,10 @@ function initAce(originalTextarea) {
         // The output is usually in the 3rd column of the table inside clang-result
         // Selector: clang-result table.table-striped tr td:nth-child(3)
         const outputCell = document.querySelector('clang-result table.table-striped tr td:nth-child(3)');
-        
+
         if (outputCell) {
             const currentText = outputCell.innerText;
-            
+
             // Check if we are loading and if the result is new
             const runBtn = document.querySelector('button[data-tooltip="Run (F5)"]');
             const isSpinnerActive = runBtn && runBtn.classList.contains('edgar-loading');
@@ -1476,7 +1849,7 @@ function initAce(originalTextarea) {
             }
         }
     });
-    
+
     // Observe the body for changes (to catch when the result table is inserted)
     resultObserver.observe(document.body, {
         childList: true,
@@ -1484,7 +1857,7 @@ function initAce(originalTextarea) {
     });
 
     // Clear annotations on change
-    editor.session.on('change', function() {
+    editor.session.on('change', function () {
         // Optional: Clear annotations when user starts typing?
         // editor.getSession().clearAnnotations(); 
         // Actually, standard behavior is to keep them until next run or manual clear.
@@ -1500,7 +1873,7 @@ function initAce(originalTextarea) {
         oldUI.CodeMirror.on('change', (instance, changeObj) => {
             if (!isSyncing) {
                 debugLog("Edgar+: Detected external change (Question switch?)");
-                
+
                 const appCode = instance.getValue();
                 const currentKey = getStorageKey();
                 let savedLocal = localStorage.getItem(currentKey);
@@ -1533,7 +1906,7 @@ function initAce(originalTextarea) {
 
     // --- BUTTON INTERCEPTION & HOTKEYS ---
     const runBtn = document.querySelector('button[title="Ctrl+Enter"]'); // Based on your HTML
-    
+
     if (runBtn) {
         // Force sync before click
         runBtn.addEventListener('mousedown', () => {
@@ -1548,11 +1921,11 @@ function initAce(originalTextarea) {
     }
 
     // Hotkeys: F1 to Paste & Run
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'F1') {
             e.preventDefault();
             debugLog("Edgar+: F1 pressed, triggering Paste & Run");
-            
+
             if (navigator.clipboard && navigator.clipboard.readText) {
                 navigator.clipboard.readText().then(text => {
                     if (text) {
@@ -1573,7 +1946,7 @@ function initAce(originalTextarea) {
     });
 
     // Hotkeys: F5 to Run
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'F5') {
             e.preventDefault(); // Stop browser refresh
             debugLog("Edgar+: F5 pressed, triggering Run");
@@ -1587,4 +1960,5 @@ function initAce(originalTextarea) {
 }
 
 // Start looking for the editor
-waitForElement('#codeMirrorEditor', initAce);
+watchForElement('#codeMirrorEditor', initAce);
+

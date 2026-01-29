@@ -20,12 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const iconPath = isEnabled ? "icons/placeholder.png" : "icons/placeholder2.png";
             chrome.action.setIcon({ path: iconPath });
 
-            // Reload the active tab to apply changes immediately
-            chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                if (tabs[0]) {
-                    chrome.tabs.reload(tabs[0].id);
-                }
-            });
+            // No manual reload needed. content.js listens for storage changes.
         });
     });
 

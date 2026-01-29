@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Edgar+",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Adds a multitude of QoL improvements to FER's Edgar evaluator.",
   "permissions": [
     "activeTab",
@@ -29,14 +29,23 @@
         "*://edgar.fer.hr/*",
         "*://*.fer.hr/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["lib/ace/*", "edgar_main.js", "icons/*", "styles.css"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "lib/ace/*",
+        "edgar_main.js",
+        "icons/*",
+        "styles.css"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ]
 }
