@@ -66,6 +66,30 @@
             margin-bottom: 15px;
             font-weight: bold;
         }
+        .archive-btn {
+            display: block;
+            width: 100%;
+            margin: 6px 0 8px;
+            padding: 7px 8px;
+            background: #444;
+            color: #f8f8f2;
+            border: 1px solid #555;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .archive-btn:hover:not(:disabled) {
+            background: #555;
+        }
+        .archive-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .hint {
+            font-size: 11px;
+            color: #999;
+            margin: -6px 0 10px;
+        }
     </style>
 </head>
 <body>
@@ -76,7 +100,10 @@
         <input type="checkbox" id="toggle-ext" checked>
         <span class="slider"></span>
     </label>
-    <p>With <3 by Karlo Vintar</p>
+    <button type="button" class="archive-btn" id="open-archive" data-tab="archive">My Code Archive</button>
+    <button type="button" class="archive-btn" id="open-cheatsheet" data-tab="cheat">Cheat Sheet</button>
+    <div class="hint">or press Ctrl+Shift+F on Edgar</div>
+    <p>With &lt;3 by Karlo Vintar · <span id="version"></span></p>
     <script src="popup.js"></script>
 </body>
 </html>

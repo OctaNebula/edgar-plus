@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Edgar+",
-  "version": "1.1",
+  "version": "1.2",
   "description": "Adds a multitude of QoL improvements to FER's Edgar evaluator.",
   "permissions": [
     "activeTab",
@@ -40,6 +40,10 @@
       "resources": [
         "lib/ace/*",
         "edgar_main.js",
+        "formatter.js",
+        "exam_tools.js",
+        "archive.js",
+        "cheatsheet.js",
         "icons/*",
         "styles.css"
       ],
