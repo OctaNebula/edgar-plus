@@ -10,9 +10,11 @@ chrome.runtime.onInstalled.addListener((details) => {
         updateIcon(isEnabled);
     });
 
-    // Open Welcome Page on Install or Update
-    if (details.reason === chrome.runtime.OnInstalledReason.INSTALL || details.reason === chrome.runtime.OnInstalledReason.UPDATE) {
+    // Open Welcome Page on Install or Update (updates also get a "welcome back" note on the page)
+    if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
         chrome.tabs.create({ url: "welcome.html" });
+    } else if (details.reason === chrome.runtime.OnInstalledReason.UPDATE) {
+        chrome.tabs.create({ url: "welcome.html?from=update" });
     }
 });
 

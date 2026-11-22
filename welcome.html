@@ -1,144 +1,220 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hr">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Novi update!</title>
+    <title>Edgar+ v1.2</title>
     <style>
         body {
             background-color: #1e1e1e;
             color: #d4d4d4;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 40px 0;
             display: flex;
             justify-content: center;
-            align-items: center;
             min-height: 100vh;
-            overflow-x: hidden;
+            box-sizing: border-box;
         }
 
         .container {
-            max-width: 800px;
-            width: 90%;
-            padding: 40px;
+            max-width: 920px;
+            width: 92%;
+            padding: 40px 48px;
             background: #252526;
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            text-align: center;
             border: 1px solid #333;
-            position: relative;
-            min-height: 400px;
-            /* Prevent layout shift */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+            box-sizing: border-box;
         }
 
         h1 {
             color: #ffd700;
-            margin-bottom: 20px;
+            margin: 0 0 8px;
             font-size: 3em;
-        }
-
-        p.subtitle {
-            color: #a0a0a0;
-            font-size: 1.2em;
-            margin-bottom: 30px;
-        }
-
-        /* Sections */
-        .section {
-            transition: opacity 0.5s ease, transform 0.5s ease;
-        }
-
-        .hidden {
-            display: none;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .fade-out {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-
-        .fade-in {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Blog Styles */
-        #blog-section {
-            text-align: left;
-            line-height: 1.8;
-            font-size: 1.1em;
-            color: #cccccc;
-        }
-
-        #blog-section p {
-            margin-bottom: 20px;
-        }
-
-        /* Features/Changelog Styles */
-        .features {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
             text-align: center;
         }
 
-        .feature-card {
-            background: #2d2d2d;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #3c3c3c;
-            transition: transform 0.2s, border-color 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1 1 200px;
-            max-width: 300px;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            border-color: #ffd700;
-        }
-
-        .feature-icon {
-            font-size: 2em;
-            margin-bottom: 15px;
+        h2 {
+            color: #ffd700;
+            font-size: 1.5em;
+            margin: 44px 0 14px;
         }
 
         h3 {
             color: #569cd6;
-            margin: 0 0 10px 0;
+            margin: 0 0 8px;
+        }
+
+        p {
+            line-height: 1.7;
+        }
+
+        code {
+            font-family: Consolas, 'Courier New', monospace;
+            background: #333;
+            color: #e6db74;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+
+        kbd {
+            display: inline-block;
+            font-family: Consolas, monospace;
+            font-size: 0.85em;
+            background: #3c3c3c;
+            border: 1px solid #555;
+            border-bottom-width: 2px;
+            border-radius: 4px;
+            padding: 0 6px;
+            color: #fff;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #a0a0a0;
+            font-size: 1.2em;
+            margin: 0 auto 8px;
+            max-width: 640px;
+        }
+
+        /* Banner for people updating from an older version */
+        .returning {
+            display: none;
+            align-items: center;
+            gap: 16px;
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.35);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 28px;
+        }
+
+        .returning.show {
+            display: flex;
+        }
+
+        .returning p {
+            margin: 0;
+            flex: 1;
+        }
+
+        .link-btn {
+            background: none;
+            border: 1px solid #ffd700;
+            color: #ffd700;
+            border-radius: 4px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 0.95em;
+            white-space: nowrap;
+        }
+
+        .link-btn:hover {
+            background: rgba(255, 215, 0, 0.12);
+        }
+
+        /* Quick start */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            counter-reset: step;
+        }
+
+        .step {
+            background: #2d2d2d;
+            border: 1px solid #3c3c3c;
+            border-radius: 8px;
+            padding: 18px 18px 16px 56px;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        .step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #ffd700;
+            color: #1e1e1e;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .step b {
+            color: #fff;
+        }
+
+        /* Features */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .feature-card {
+            background: #2d2d2d;
+            padding: 18px;
+            border-radius: 8px;
+            border: 1px solid #3c3c3c;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: #ffd700;
+        }
+
+        .feature-icon {
+            font-size: 1.8em;
+            margin-bottom: 8px;
         }
 
         .feature-card p {
             color: #cccccc;
             font-size: 0.95em;
-            line-height: 1.5;
+            line-height: 1.55;
             margin: 0;
-            text-align: left;
-            width: 100%;
         }
 
-        .footer {
-            margin-top: 40px;
-            border-top: 1px solid #3c3c3c;
-            padding-top: 20px;
-            color: #666;
-            font-size: 0.9em;
+        .note {
+            color: #a0a0a0;
+            margin-top: 16px;
         }
 
-        /* Button */
+        .faq {
+            background: #2d2d2d;
+            border-left: 4px solid #a6e22e;
+            border-radius: 4px;
+            padding: 14px 18px;
+            margin-top: 32px;
+        }
+
+        .faq p {
+            margin: 0;
+        }
+
+        .faq strong.q {
+            display: block;
+            color: #a6e22e;
+            margin-bottom: 4px;
+        }
+
+        .cta {
+            text-align: center;
+            margin: 36px 0 8px;
+        }
+
         .btn {
             display: inline-block;
-            margin-top: 30px;
             padding: 12px 30px;
             background: #ffd700;
             color: #1e1e1e;
@@ -155,87 +231,280 @@
             background: #ffea00;
             transform: scale(1.05);
         }
+
+        /* The long letter */
+        details.letter {
+            margin-top: 44px;
+            border-top: 1px solid #3c3c3c;
+            padding-top: 24px;
+        }
+
+        details.letter summary {
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            background: #2d2d2d;
+            border: 1px solid #3c3c3c;
+            border-radius: 8px;
+            font-size: 1.15em;
+            color: #fff;
+        }
+
+        details.letter summary::-webkit-details-marker {
+            display: none;
+        }
+
+        details.letter summary:hover {
+            border-color: #ffd700;
+        }
+
+        details.letter summary .hint {
+            color: #a0a0a0;
+            font-size: 0.85em;
+            margin-left: auto;
+        }
+
+        details.letter summary .chev {
+            transition: transform 0.2s;
+            color: #ffd700;
+        }
+
+        details.letter[open] summary .chev {
+            transform: rotate(90deg);
+        }
+
+        .letter-body {
+            font-size: 1.07em;
+            color: #cccccc;
+            padding: 8px 6px 0;
+        }
+
+        .letter-body h3 {
+            color: #ffd700;
+            font-size: 1.2em;
+            margin: 32px 0 6px;
+        }
+
+        .letter-body p {
+            margin: 0 0 16px;
+            line-height: 1.8;
+        }
+
+        .signature {
+            font-style: italic;
+            color: #ffd700;
+        }
+
+        .footer {
+            margin-top: 40px;
+            border-top: 1px solid #3c3c3c;
+            padding-top: 20px;
+            color: #666;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        @media (max-width: 760px) {
+            .container {
+                padding: 28px 22px;
+            }
+
+            .steps {
+                grid-template-columns: 1fr;
+            }
+
+            .returning {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>Edgar+ v1.1</h1>
 
-        <!-- Blog Section (Initial View) -->
-        <div id="blog-section" class="section">
-            <p class="subtitle">Konačno, novi update!</p>
-            <p>
-                Zdravo svima! Prošlo je boga mi dosta puno vremena otkako sam radio na ovom web extensionu, ali eto
-                (nadam se) do ispita bi Chrome trebao dovesti svoje sranje u red i objaviti novi update (hvala Mozilli
-                što će ga publishati gotovo na licu mjesta lmfao).
-            </p>
-            <p>
-                Dosta puno toga mi se dogodilo u zadnja 2 mjeseca, od raznih uspješnih projekata do nedavno slomljene
-                noge
-                (jao), pa baš nisam bio u stanju posvetiti dovoljno vremena da nadogradim ovaj extension - prije nego
-                što sam se uopće mogao primiti ajmo to tako nazvati "zabavnih" stvari, morao sam popraviti brojne
-                bugove koje nisam počistio pri objavljivanju v1.0. Edgar+ov kod je malo neuredan (slobodno bacite oko na
-                GitHub), što mi je dovoljno otežalo cijelu proceduru popravljanja tih bugova. Ali eto, s dobre strane
-                uspio sam, i mogu sa zadovoljstvom reći da Edgar+ ima znatno gori kod nego ikada prije :D
-            </p>
-            <p>
-                Inače, za one koji se brinu - dobio sam <strong>izričitu dozvolu</strong> (a i čokoladu) <strong>od
-                    prof. Mekterovića da se
-                    ovaj extension SMIJE koristiti na ispitima i labosima</strong>, dakle dragi kolege i kolegice, samo
-                navalite!
-            </p>
-            <p>
-                Konačno, samo bi htio se osobno zahvaliti svim dragim kolegama i kolegicama koji su mi uz sve ovo
-                pravili veliko društvo na FERu (vi koji znate, znate), kolegama sa KSETove kompjuterske sekcije, kao i
-                tebi što si uzeo 5 sekundi da instaliraš moj mali hobij projekt. Nadam se da će ti svakako pomoći!
-            </p>
-            <p>
-                ~ Karlo
-            </p>
+        <!-- Shown only when Edgar+ was updated (welcome.html?from=update) -->
+        <div class="returning" id="returning">
+            <p>👋 <strong>Stari korisniče, dobro došao natrag!</strong> Ispod je sve što je novo, a na dnu te čeka i
+                jedna malo duža poruka.</p>
+            <button type="button" class="link-btn" id="read-letter">Pročitaj poruku ↓</button>
         </div>
 
-        <!-- Changelog Section (Hidden Initially) -->
-        <div id="changelog-section" class="section hidden">
-            <p class="subtitle">Evo glavnih novih stvari u v1.1:</p>
-            <div class="features">
-                <div class="feature-card">
-                    <div class="feature-icon">👾</div>
-                    <h3>Fixani bugovi</h3>
-                    <p>Patchao bug koji bi slomio Edgar+ kada se učita element koji ne sadrži code editor (npr.
-                        šalabahter na kraju ispita ili tutoriali).</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🎨</div>
-                    <h3>Novi theme</h3>
-                    <p>Edgar+ sada ima novi theme koji liči na VSCodeov Monaco theme. Također uključuje i bojanje
-                        funkcija!</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">💾</div>
-                    <h3>Persistence</h3>
-                    <p>Edgar+ sada automatski sačuva kod koji pišeš! Šanse da ti se kod slomi su (NADAJMO SE) dosta
-                        manje!</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">⚙️</div>
-                    <h3>Settings Sidebar</h3>
-                    <p>Edgar+ sada ima novi settings sidebar u kojem se nalaze sve postavke od prije. Bolji UX, kolege!
-                    </p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🎉</div>
-                    <h3>QoLovi</h3>
-                    <p>Zagrade se sada automatski bojaju po razini u kojima se nalaze! Također možeš upaliti
-                        "Highlight Brackets" feature da ti se dodatno označe zagrade u kojima programiraš.</p>
-                </div>
+        <h1>Edgar+ v1.2</h1>
+        <p class="subtitle">Bolji editor, arhiva svega što si ikad predao na Edgar, šalabahter i alati za ispite.
+            Sve unutar samog Edgara.</p>
+
+        <h2>Kako početi</h2>
+        <div class="steps">
+            <div class="step">
+                <b>Otvori zadatak na Edgaru.</b> Editor se sam zamijeni Edgar+ editorom: <kbd>F5</kbd> ili
+                <kbd>Ctrl+Enter</kbd> pokreće kod, a <kbd>Shift+Alt+F</kbd> ga uredno formatira.
+            </div>
+            <div class="step">
+                <b>Pritisni <kbd>Ctrl+Shift+F</kbd> i klikni Sync</b> da preuzmeš sva svoja stara rješenja. Napravi to
+                <b>prije</b> ispita: za vrijeme ispita sync je isključen, a arhiva radi i offline.
+            </div>
+            <div class="step">
+                <b>Zapneš li, otvori Šalabahter</b> (ista tipka, druga kartica): gotovi isječci koda koji se jednim
+                klikom ubace u editor, plus tablice i pojmovnik.
             </div>
         </div>
 
-        <button id="action-btn" class="btn">Okej, dakle što je novo?</button>
+        <h2>Što je novo u v1.2?</h2>
+        <p>Popravio sam jedno 20-ak ludih bugova, a usput dodao i ovo:</p>
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🗄️</div>
+                <h3>Arhiva koda</h3>
+                <p>Jednim klikom preuzmi sav kod koji si ikad predao na Edgar: ispite i labose (uključujući svaku
+                    verziju koju si pokrenuo), tutoriale i snippete. Sve to pretražuješ s <kbd>Ctrl+Shift+F</kbd>, bez
+                    napuštanja stranice.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💡</div>
+                <h3>Slični zadaci</h3>
+                <p>Kad otvoriš zadatak na ispitu, Edgar+ u tvojoj arhivi traži rješenja s istim funkcijama,
+                    strukturama i datotekama, pa ti ih nudi na jedan klik.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📚</div>
+                <h3>Šalabahter</h3>
+                <p>Preko 60 gotovih isječaka koda (sortiranja, qsort, datoteke, malloc, nizovi, matrice, bitovi...)
+                    koji se ubace u editor zajedno s potrebnim <code>#include</code>-ovima, plus tablice i pojmovnik na
+                    hrvatskom ili engleskom. Možeš spremati i svoje isječke te ih dijeliti s kolegama.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>Čitljiv diff testova</h3>
+                <p>Ispod rezultata testova vidiš očekivani i svoj izlaz redak po redak, s točnim mjestom prve razlike
+                    i vidljivim razmacima. Zbogom, Edgarov nečitljivi diff.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🕘</div>
+                <h3>Povijest koda</h3>
+                <p>Edgar+ sprema verziju koda pri svakom pokretanju, svake 2 minute pisanja te prije Paste &amp; Run i
+                    formatiranja. Svaku verziju možeš usporediti s trenutnim kodom i vratiti je.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🧹</div>
+                <h3>Formatiranje koda</h3>
+                <p><kbd>Shift+Alt+F</kbd> sredi uvlake, razmake i rasporedi naredbe po recima. Mijenja se samo razmak,
+                    nikad sam kod, tako da formatiranje ne može ništa pokvariti.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⏱️</div>
+                <h3>Status i vrijeme</h3>
+                <p>Vidiš je li kod u editoru onaj koji si zadnji pokrenuo i koliko si vremena proveo na kojem
+                    zadatku, a upozorenje stiže kad ostane 15 i 5 minuta.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👾</div>
+                <h3>Fixani bugovi</h3>
+                <p>Prekidači za Vim, auto-zagrade, nevidljive znakove i čišćenje outputa sada stvarno rade. Stranice s
+                    više editora (tutoriali) više se ne kvare, F5/F1 uvijek pokreću pravi editor, a tooltipovi se više
+                    ne skrivaju iza koda.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💾</div>
+                <h3>Pouzdanost</h3>
+                <p>Gašenje i paljenje Edgar+a više ne osvježava stranicu, a update nikad neće sam osvježiti stranicu
+                    usred ispita. Ako Edgar ima noviju verziju koda od tvoje lokalne kopije, Edgar+ je neće prepisati,
+                    nego će ti ponuditi vraćanje.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⌨️</div>
+                <h3>Prečaci</h3>
+                <p><kbd>Ctrl+Enter</kbd> pokreće kod (kao u originalnom Edgaru), <kbd>Ctrl+S</kbd> sprema, a greške
+                    prevodioca prikazuju se uz pravi redak, sad i za Javu.</p>
+            </div>
+        </div>
+        <p class="note">Dosta zgodan feature list, ha? Sve se može (ali ne mora) ugasiti u postavkama: klikni ⚙️ u
+            alatnoj traci editora.</p>
+
+        <div class="faq">
+            <p><strong class="q">Smije li se ovo koristiti na ispitima?</strong>
+                Dobio sam <strong>izričitu dozvolu</strong> (a i čokoladu) <strong>od prof. Mekterovića da se ovaj
+                    extension SMIJE koristiti na ispitima i labosima</strong>, dakle dragi kolege i kolegice, samo
+                navalite!</p>
+        </div>
+
+        <div class="cta">
+            <button id="action-btn" class="btn">Odvedi me na Edgar...</button>
+        </div>
+
+        <details class="letter" id="letter">
+            <summary>
+                <span class="chev">▶</span>
+                <span>✉️ Duža priča: savjeti za brucoše i pismo starim kolegama</span>
+                <span class="hint">za sve koje zanima</span>
+            </summary>
+            <div class="letter-body">
+                <p>Drage kolege i kolegice, za početak se SVAKAKO nadam da biseri iz Googlea nisu odgodili objavu ovog
+                    updatea do nekog trenutka nakon međuispita iz UPRO-a, jer vjerujem da će ono što donosim u ovoj
+                    verziji svakako apsolutno svakom studentu donijeti barem neku razinu pomoći.</p>
+                <p>Ovaj update sam zapravo htio objaviti još prošle akademske godine, u drugom semestru, no drugi
+                    semestar je donio OOP, a OOP je donio tegobe epskih razmjera, pa je sve to palo u vodu. No eto, kako
+                    brucoši koje poznajem uskoro polažu MI, nekako sam se sada, u prvom semestru, dosjetio poraditi na
+                    ovome i dovesti te planove u realnost.</p>
+                <p>Da skratim priču, jer sam svjestan da je mnogo vas koji ovo čitate UPRO već lani položilo (ili,
+                    ne daj Bože, niste): popravio sam jedno 20-ak ludih bugova i dodao hrpu novih stvari, od arhive
+                    svega što ste ikad predali na Edgar do šalabahtera, formatiranja koda i čitljivog diffa testova.
+                    Cijeli popis vam je gore. Dosta zgodan feature list, ako mene pitate.</p>
+
+                <h3>Brucošima...</h3>
+                <p>Toplo bih vam svima preporučio da pokušate zgrabiti što je moguće više bodova na MI-ju. Sad, znam
+                    da to zvuči kao "no way, kako sam se mogao sjetiti te ideje, vrlo korisno 😐", no govorim ovo zato
+                    što na MI-ju još ne cjepidlače sa sranjima poput rada s datotekama i memory managementa. Zaista nije
+                    pretežak, a ako ste rješavali zadatke na Edgaru, sada ćete moći bez problema pretraživati sva svoja
+                    prošla rješenja, što, ruku na srce, svakako može pomoći.</p>
+                <p>Dodao sam i šalabahter sa snippetovima koje možete bez problema ubaciti u svoj kod, pa ćete u
+                    krajnjoj liniji dobiti barem neki bod koji vas može dijeliti od prolaza. Lani sam dobio bodove samo
+                    zato što sam ugurao boilerplate funkciju za sorting algoritam. Da to nisam napravio, zviznuo bih
+                    predmet.</p>
+                <p>I ako vam mogu preporučiti još jednu stvar: <strong>molim vas, ne preskačite labose</strong>,
+                    pogotovo ne zadnje. Zadnji labosi nose ludu količinu bodova, a ja sam zbog izostanka (skijanja)
+                    početkom 2. semestra ispaštao na bodovima do te mjere da mi je ocjena bila kompletno granična.
+                    Nemojte si to priuštiti ;/</p>
+
+                <h3>...a i starim kolegama</h3>
+                <p>Mnogo kolega mi se kroz godinu privatno javilo i zahvalilo na ovom extensionu, rekavši mi da im je
+                    digao ocjenu. Iznimno mi je drago što sam vam mogao pomoći i vrlo rado bih opet, kada bih mogao.
+                    Ako išta mogu zatražiti zauzvrat, javite svojim brucošima da ovo proširenje postoji, pa da i njima
+                    bude lakše na ispitima. Unaprijed hvala! ;)</p>
+
+                <h3>A što sa mnom?</h3>
+                <p>Ja sam se ove godine ispisao s FER-a i upisao studij informatike u inozemstvu. Oduvijek sam htio
+                    studirati vani i malo izaći iz svoje comfort zone.</p>
+                <p>Rad na proširenju će najvjerojatnije preuzeti moj dragi kolega s prve godine, uglavnom zato što ne
+                    vjerujem da sam sposoban nadograđivati i održavati ovaj kod ako ne znam iz prve ruke što je
+                    aktualno na ovom specifičnom predmetu. Vjerujem da će on po tom pitanju odraditi i bolji posao od
+                    mene ;)</p>
+
+                <h3>A za moje bliske kolege: posebne zahvale</h3>
+                <p>Doduše, sve dosad sam imao osjećaj da se nisam kako spada oprostio od doma, a <strong>pogotovo</strong>
+                    ne od dragih kolega s kojima sam se družio (oni koji znaju, znaju).</p>
+                <p>Zato bih se htio svojim dragim kolegama zahvaliti na apsolutno svemu: od slušanja mojih glupih
+                    priča i trpljenja mojih najgorih trenutaka pa sve do toga što ste, u konačnici, bili tu za mene
+                    kada su mi dani zaista bili najgori.</p>
+                <p>Najiskrenije, uistinu mi svi redom nedostajete, isto kao što mi nedostaje nešto sasvim jednostavno
+                    poput kave u Bourbonu nakon predavanja (ovdje u Nizozemskoj koncept izlazaka jednostavno ne
+                    postoji, svi su užasno posloženi i u kafane se ide samo da bi se za 30-ak minuta išlo dalje).
+                    Ipak, sam sam si izabrao ovaj put i lagao bih kada bih rekao da je iskustvo koje ovdje stječem
+                    išta manje od neprocjenjivog.</p>
+                <p>Nadam se da ste svi dobro, da vam je super na drugoj godini i da ste se mirno pripremili za ispite
+                    koji uskoro dolaze (za razliku od, AHEM, određene osobe koja je prije jedno mjesec dana kampanjski
+                    sve učila).</p>
+                <p>Drž'te se,</p>
+                <p class="signature">~ Karlo</p>
+            </div>
+        </details>
 
         <div class="footer">
-            <p>Version 1.1 • Made with ❤️ for FER</p>
+            <p>Version 1.2 • Made with ❤️ for FER</p>
         </div>
     </div>
 

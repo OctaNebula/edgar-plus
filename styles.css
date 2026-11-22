@@ -1,4 +1,4 @@
-/* styles.css */
+/* styles.css — Edgar+ */
 /* Force Consolas Font Override for specific elements only */
 @font-face {
     font-family: 'IosevkaSlabWEB';
@@ -22,7 +22,12 @@ code {
     font-variant-ligatures: none !important;
 }
 
-#edgar-plus-ace-editor {
+/* ------------------------------------------------------------------ */
+/* Editor                                                              */
+/* ------------------------------------------------------------------ */
+
+.edgar-plus-ace {
+    width: 100%;
     border: 1px solid #444;
     border-top: none;
     border-bottom: none;
@@ -32,15 +37,20 @@ code {
     /* Prevent scroll jumping when resizing */
 }
 
-#edgar-plus-footer {
-    background-color: #2F3129;
-    border: 1px solid #444;
+.edgar-plus-footer {
+    background-color: var(--ep-bar-bg, #2F3129);
+    color: var(--ep-fg, #f8f8f2);
+    border: 1px solid var(--ep-border, #444);
     border-top: none;
     border-radius: 0 0 4px 4px;
     padding: 10px;
     display: flex;
+    align-items: center;
     justify-content: flex-end;
     gap: 10px;
+    /* Own stacking layer above the Ace editor, so tooltips aren't painted behind the code */
+    position: relative;
+    z-index: 10;
 }
 
 .edgar-plus-btn-group {
@@ -58,10 +68,6 @@ code {
     border-radius: 4px;
     font-size: 18px;
     transition: opacity 0.2s;
-}
-
-.edgar-plus-square-btn:hover {
-    opacity: 0.9;
 }
 
 .edgar-plus-square-btn.edgar-loading {
@@ -89,7 +95,14 @@ code {
     font-size: 16px;
 }
 
-.edgar-plus-square-btn i {
+.edgar-plus-tb-btn {
+    width: 30px;
+    height: 30px;
+}
+
+.edgar-plus-square-btn i,
+.edgar-plus-square-btn img,
+.edgar-plus-square-btn svg {
     pointer-events: none;
     /* Ensure click hits button */
 }
@@ -110,6 +123,7 @@ code {
     padding: 6px 10px;
     border-radius: 4px;
     font-size: 12px;
+    font-weight: normal;
     white-space: nowrap;
     opacity: 0;
     visibility: hidden;
@@ -145,10 +159,42 @@ code {
     transform: translateX(-50%) translateY(0);
 }
 
-#edgar-plus-toolbar {
-    background-color: #2F3129;
+/* Toolbar tooltips open below the button so they aren't clipped */
+.edgar-plus-toolbar .edgar-plus-square-btn::after {
+    bottom: auto;
+    top: 120%;
+    transform: translateX(-50%) translateY(-10px);
+}
+
+.edgar-plus-toolbar .edgar-plus-square-btn::before {
+    bottom: auto;
+    top: 120%;
+    transform: translateX(-50%) translateY(-10px);
+    border-top-color: transparent;
+    border-bottom-color: #2F3129;
+    margin-bottom: 0;
+    margin-top: -11px;
+}
+
+.edgar-plus-toolbar .edgar-plus-square-btn:hover::after,
+.edgar-plus-toolbar .edgar-plus-square-btn:hover::before {
+    transform: translateX(-50%) translateY(0);
+}
+
+.edgar-plus-toolbar .edgar-plus-settings-btn::after {
+    left: auto;
+    right: 0;
+    transform: translateY(-10px);
+}
+
+.edgar-plus-toolbar .edgar-plus-settings-btn:hover::after {
+    transform: translateY(0);
+}
+
+.edgar-plus-toolbar {
+    background-color: var(--ep-bar-bg, #2F3129);
     /* Monokai background match */
-    border: 1px solid #444;
+    border: 1px solid var(--ep-border, #444);
     border-bottom: none;
     border-radius: 4px 4px 0 0;
     /* Rounded top corners */
@@ -157,126 +203,92 @@ code {
     align-items: center;
     gap: 10px;
     font-family: sans-serif;
-    color: #f8f8f2;
+    color: var(--ep-fg, #f8f8f2);
+    /* Own stacking layer above the Ace editor below it, so tooltips and popovers stay visible.
+       Edgar's sticky headers use z-index 1000+, so the toolbar still scrolls under them. */
+    position: relative;
+    z-index: 10;
 }
 
-#edgar-plus-toolbar select {
+.edgar-plus-toolbar select {
     padding: 2px 5px;
     border-radius: 3px;
-    border: 1px solid #555;
-    background-color: #444;
-    color: #f8f8f2;
+    border: 1px solid var(--ep-btn-border, #555);
+    background-color: var(--ep-btn-bg, #444);
+    color: var(--ep-fg, #f8f8f2);
 }
 
-#edgar-plus-zoom-in {
+.edgar-plus-spacer {
+    margin-left: auto;
+}
+
+.edgar-plus-zoom-in {
     margin-right: 10px;
-    /* Add space between zoom and detach */
+    /* Add space between zoom and the other toolbar buttons */
 }
 
-#edgar-plus-toolbar button {
+.edgar-plus-toolbar button {
     padding: 2px 8px;
     cursor: pointer;
-    border: 1px solid #555;
+    border: 1px solid var(--ep-btn-border, #555);
     border-radius: 3px;
-    background-color: #444;
-    color: #f8f8f2;
+    background-color: var(--ep-btn-bg, #444);
+    color: var(--ep-fg, #f8f8f2);
     font-weight: bold;
+    transition: background-color 0.15s, border-color 0.15s;
 }
 
-#edgar-plus-toolbar button:hover {
-    background-color: #555;
+.edgar-plus-toolbar button:hover {
+    background-color: var(--ep-btn-hover, #555);
+    border-color: var(--ep-fg, #f8f8f2);
 }
 
-#edgar-plus-toolbar span {
+.edgar-plus-toolbar span {
     font-size: 12px;
-    color: #ccc;
+    color: var(--ep-fg, #ccc);
+    opacity: 0.85;
 }
 
-#edgar-plus-zoom-level {
+.edgar-plus-toolbar .edgar-plus-zoom-level {
     min-width: 40px;
     text-align: center;
     font-family: monospace;
-    color: #fff !important;
+    color: var(--ep-fg, #fff) !important;
+    opacity: 1;
+    cursor: pointer;
+}
+
+.edgar-plus-zoom-input {
+    width: 40px;
+    background: #2F3129;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 3px;
+    text-align: center;
+    font-size: 12px;
+    padding: 0;
+    height: 18px;
 }
 
 /* Settings Button */
-#edgar-plus-settings-btn {
+.edgar-plus-toolbar .edgar-plus-settings-btn {
     background: none;
-    border: none;
-    color: #ccc;
+    border: 1px solid transparent;
+    color: var(--ep-fg, #ccc);
     cursor: pointer;
-    padding: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
+    width: 30px;
+    height: 30px;
     margin-left: 5px;
 }
 
-#edgar-plus-settings-btn:hover {
-    background-color: #444;
-    color: #fff;
+.edgar-plus-toolbar .edgar-plus-settings-btn:hover {
+    background-color: var(--ep-btn-bg, #444);
+    border-color: var(--ep-btn-border, #555);
 }
 
-/* Modal Overlay */
-#edgar-plus-settings-modal {
-    display: none;
-    /* Hidden by default */
-    position: fixed;
-    z-index: 10000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-#edgar-plus-settings-modal.show {
-    opacity: 1;
-}
-
-/* Modal Content */
-.edgar-plus-modal-content {
-    background-color: #2F3129;
-    border: 1px solid #444;
-    border-radius: 6px;
-    width: 300px;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    color: #f8f8f2;
-    font-family: sans-serif;
-    position: relative;
-}
-
-.edgar-plus-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    border-bottom: 1px solid #444;
-    padding-bottom: 10px;
-}
-
-.edgar-plus-modal-title {
-    font-size: 16px;
-    font-weight: bold;
-}
-
-.edgar-plus-close-btn {
-    background: none;
-    border: none;
-    color: #ccc;
-    font-size: 20px;
-    cursor: pointer;
-    line-height: 1;
-}
-
-.edgar-plus-close-btn:hover {
-    color: #fff;
+/* If Edgar+ could not take over an editor, never leave the user without Edgar's Run button */
+.edgar-plus-init-failed button[title="Ctrl+Enter"] {
+    display: inline-block !important;
 }
 
 /* Settings Items */
@@ -291,12 +303,22 @@ code {
     font-size: 14px;
 }
 
+.edgar-plus-setting-item select {
+    background: #444;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: 2px 5px;
+    max-width: 160px;
+}
+
 /* Toggle Switch */
 .edgar-plus-switch {
     position: relative;
     display: inline-block;
     width: 34px;
     height: 20px;
+    margin: 0;
 }
 
 .edgar-plus-switch input {
@@ -342,7 +364,7 @@ input:checked+.edgar-plus-slider:before {
     transform: translateX(14px);
 }
 
-/* Hide original buttons immediately to prevent flash */
+/* Hide original Run buttons immediately to prevent flash */
 button[title="Ctrl+Enter"] {
     display: none !important;
 }
@@ -372,7 +394,9 @@ button[title="Ctrl+Enter"] {
     border: none !important;
 }
 
-/* Sidebar */
+/* ------------------------------------------------------------------ */
+/* Sidebar                                                             */
+/* ------------------------------------------------------------------ */
 #edgar-plus-sidebar {
     position: fixed;
     top: 0;
@@ -387,6 +411,7 @@ button[title="Ctrl+Enter"] {
     transition: right 0.3s ease;
     display: flex;
     flex-direction: column;
+    font-family: sans-serif;
 }
 
 #edgar-plus-sidebar.open {
@@ -463,6 +488,53 @@ button[title="Ctrl+Enter"] {
     margin-top: 0;
 }
 
+.edgar-plus-sidebar-btn {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #444;
+    color: #f8f8f2;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.edgar-plus-sidebar-btn:hover {
+    background: #555;
+}
+
+.edgar-plus-shortcuts {
+    font-size: 13px;
+    line-height: 1.9;
+    color: #f8f8f2;
+}
+
+#edgar-plus-sidebar kbd,
+#edgar-plus-archive kbd {
+    display: inline-block;
+    background: #444;
+    border: 1px solid #555;
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    color: #f8f8f2;
+    font-family: Consolas, monospace;
+    font-size: 11px;
+    padding: 0 4px;
+    line-height: 1.5;
+    box-shadow: none;
+}
+
+.edgar-plus-link {
+    color: #66d9ef;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 /* Rainbow Brackets - Text Coloring */
 /* Correction for Space Separated Classes */
 .edgar-depth-0 {
@@ -496,4 +568,1569 @@ body.edgar-hide-bracket-match .ace_bracket {
     border: none !important;
     background: none !important;
     margin: 0 !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Toasts                                                              */
+/* ------------------------------------------------------------------ */
+#edgar-plus-toasts {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2147483600;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    pointer-events: none;
+}
+
+.edgar-plus-toast {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 640px;
+    background: #2F3129;
+    color: #f8f8f2;
+    border: 1px solid #444;
+    border-left: 4px solid #a6e22e;
+    border-radius: 4px;
+    padding: 8px 10px 8px 14px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    font-family: sans-serif;
+    font-size: 13px;
+    animation: edgar-plus-toast-in 0.2s ease;
+}
+
+.edgar-plus-toast-error {
+    border-left-color: #f92672;
+}
+
+.edgar-plus-toast button {
+    background: #444;
+    color: #f8f8f2;
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: 2px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.edgar-plus-toast .edgar-plus-toast-action {
+    background: #a6e22e;
+    color: #272822;
+    border-color: #a6e22e;
+    font-weight: bold;
+}
+
+.edgar-plus-toast .edgar-plus-toast-close {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 16px;
+    padding: 0 2px;
+}
+
+@keyframes edgar-plus-toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* Code Archive overlay                                                */
+/* ------------------------------------------------------------------ */
+#edgar-plus-archive {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2147483000;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    color: #f8f8f2;
+    text-align: left;
+}
+
+#edgar-plus-archive.open {
+    display: block;
+}
+
+#edgar-plus-archive * {
+    box-sizing: border-box;
+}
+
+#edgar-plus-archive .epa-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+#edgar-plus-archive .epa-window {
+    position: absolute;
+    top: 4vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(1800px, 94vw);
+    height: 92vh;
+    background: #272822;
+    border: 1px solid #444;
+    border-radius: 8px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#edgar-plus-archive .epa-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+    background: #2F3129;
+    border-bottom: 1px solid #444;
+}
+
+#edgar-plus-archive .epa-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffd700;
+}
+
+#edgar-plus-archive .epa-sync-info {
+    color: #a0a0a0;
+    flex: 1;
+}
+
+#edgar-plus-archive .epa-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+#edgar-plus-archive .epa-btn {
+    background: #444;
+    color: #f8f8f2;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+#edgar-plus-archive .epa-btn:hover {
+    background: #555;
+}
+
+#edgar-plus-archive .epa-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#edgar-plus-archive .epa-btn-primary {
+    background: #a6e22e;
+    border-color: #a6e22e;
+    color: #272822;
+    font-weight: bold;
+}
+
+#edgar-plus-archive .epa-btn-primary:hover {
+    background: #b8f040;
+}
+
+#edgar-plus-archive .epa-close {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+#edgar-plus-archive .epa-close:hover {
+    color: #fff;
+}
+
+#edgar-plus-archive .epa-progress {
+    position: relative;
+    height: 0;
+    overflow: hidden;
+    background: #1e1f1a;
+    transition: height 0.2s;
+}
+
+#edgar-plus-archive .epa-progress.active {
+    height: 24px;
+}
+
+#edgar-plus-archive .epa-progress-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: rgba(166, 226, 46, 0.25);
+    transition: width 0.3s;
+}
+
+#edgar-plus-archive .epa-progress-text {
+    position: relative;
+    padding: 0 14px;
+    line-height: 24px;
+    color: #ccc;
+    white-space: nowrap;
+}
+
+#edgar-plus-archive .epa-searchbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px 6px;
+}
+
+#edgar-plus-archive .epa-search {
+    flex: 1;
+    background: #1e1f1a;
+    color: #f8f8f2;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: Consolas, 'Courier New', monospace;
+    outline: none;
+}
+
+#edgar-plus-archive .epa-search:focus {
+    border-color: #66d9ef;
+}
+
+#edgar-plus-archive .epa-search.epa-invalid {
+    border-color: #f92672;
+}
+
+#edgar-plus-archive .epa-opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    padding: 4px 8px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background: #333;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    font-weight: normal;
+}
+
+#edgar-plus-archive .epa-opt input {
+    margin: 0;
+}
+
+#edgar-plus-archive .epa-opt span {
+    font-family: Consolas, monospace;
+}
+
+#edgar-plus-archive .epa-filters {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px 10px;
+    border-bottom: 1px solid #444;
+}
+
+#edgar-plus-archive .epa-chip {
+    background: #333;
+    color: #ccc;
+    border: 1px solid #555;
+    border-radius: 12px;
+    padding: 2px 12px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+#edgar-plus-archive .epa-chip::after {
+    content: ' ' attr(data-count);
+    color: #888;
+}
+
+#edgar-plus-archive .epa-chip.active {
+    background: #66d9ef;
+    border-color: #66d9ef;
+    color: #272822;
+    font-weight: bold;
+}
+
+#edgar-plus-archive .epa-chip.active::after {
+    color: #2F3129;
+}
+
+#edgar-plus-archive .epa-opt-right {
+    margin-left: auto;
+}
+
+#edgar-plus-archive .epa-body {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+}
+
+#edgar-plus-archive .epa-results {
+    width: 40%;
+    min-width: 320px;
+    max-width: 560px;
+    overflow-y: auto;
+    border-right: 1px solid #444;
+    outline: none;
+}
+
+#edgar-plus-archive .epa-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #333;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+}
+
+#edgar-plus-archive .epa-item:hover {
+    background: #2d2e27;
+}
+
+#edgar-plus-archive .epa-item.selected {
+    background: #3a3b33;
+    border-left-color: #66d9ef;
+}
+
+#edgar-plus-archive .epa-item-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#edgar-plus-archive .epa-item-title {
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+
+#edgar-plus-archive .epa-item-sub {
+    color: #a0a0a0;
+    font-size: 12px;
+    margin: 2px 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#edgar-plus-archive .epa-has-task {
+    color: #ae81ff;
+}
+
+#edgar-plus-archive .epa-date {
+    color: #888;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+#edgar-plus-archive .epa-src {
+    font-size: 10px;
+    font-weight: bold;
+    padding: 1px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+#edgar-plus-archive .epa-src-exam {
+    background: #fd971f;
+    color: #272822;
+}
+
+#edgar-plus-archive .epa-src-tutorial {
+    background: #ae81ff;
+    color: #272822;
+}
+
+#edgar-plus-archive .epa-src-snippet {
+    background: #66d9ef;
+    color: #272822;
+}
+
+#edgar-plus-archive .epa-st {
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+#edgar-plus-archive .epa-st-correct {
+    color: #a6e22e;
+}
+
+#edgar-plus-archive .epa-st-partial {
+    color: #fd971f;
+}
+
+#edgar-plus-archive .epa-st-incorrect {
+    color: #f92672;
+}
+
+#edgar-plus-archive .epa-st-unanswered {
+    color: #888;
+}
+
+#edgar-plus-archive .epa-seen {
+    font-size: 11px;
+    color: #e6db74;
+    border: 1px solid #75715e;
+    border-radius: 3px;
+    padding: 0 4px;
+}
+
+#edgar-plus-archive .epa-line {
+    display: flex;
+    gap: 8px;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre;
+    overflow: hidden;
+}
+
+#edgar-plus-archive .epa-ln {
+    color: #75715e;
+    min-width: 28px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+#edgar-plus-archive .epa-line code {
+    background: none;
+    color: #e8e8e2;
+    padding: 0;
+    font-size: inherit;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#edgar-plus-archive mark {
+    background: rgba(230, 219, 116, 0.35);
+    color: inherit;
+    padding: 0;
+    border-radius: 2px;
+}
+
+#edgar-plus-archive .epa-more {
+    color: #888;
+    font-size: 11px;
+    margin-top: 2px;
+    padding-left: 36px;
+}
+
+#edgar-plus-archive .epa-empty {
+    padding: 30px 24px;
+    color: #a0a0a0;
+    line-height: 1.6;
+}
+
+#edgar-plus-archive .epa-empty p {
+    margin: 0 0 10px;
+}
+
+#edgar-plus-archive .epa-viewer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+#edgar-plus-archive .epa-viewer-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 14px;
+    background: #2F3129;
+    border-bottom: 1px solid #444;
+}
+
+#edgar-plus-archive .epa-vh-main {
+    flex: 1;
+    min-width: 0;
+}
+
+#edgar-plus-archive .epa-vh-title {
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+#edgar-plus-archive .epa-vh-sub {
+    color: #a0a0a0;
+    font-weight: normal;
+}
+
+#edgar-plus-archive .epa-vh-meta {
+    color: #888;
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+#edgar-plus-archive .epa-link {
+    color: #66d9ef;
+    margin-left: 6px;
+}
+
+#edgar-plus-archive .epa-vh-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+#edgar-plus-archive .epa-version {
+    background: #444;
+    color: #f8f8f2;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 3px 6px;
+    max-width: 220px;
+}
+
+#edgar-plus-archive .epa-task {
+    max-height: 32%;
+    overflow-y: auto;
+    padding: 10px 14px;
+    background: #23241f;
+    border-bottom: 1px solid #444;
+    line-height: 1.5;
+    flex-shrink: 0;
+}
+
+#edgar-plus-archive .epa-task-label {
+    color: #ae81ff;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+#edgar-plus-archive .epa-task-text {
+    white-space: pre-wrap;
+    color: #ddd;
+}
+
+#edgar-plus-archive .epa-code {
+    flex: 1;
+    min-height: 0;
+}
+
+#edgar-plus-archive .epa-code-fallback {
+    display: none;
+    flex: 1;
+    margin: 0;
+    padding: 10px 14px;
+    overflow: auto;
+    background: #272822;
+    color: #f8f8f2;
+    font-size: 13px;
+}
+
+#edgar-plus-archive .epa-hit {
+    position: absolute;
+    background: rgba(230, 219, 116, 0.35);
+    border-radius: 2px;
+}
+
+#edgar-plus-archive .epa-footer {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 6px 14px;
+    border-top: 1px solid #444;
+    background: #2F3129;
+    color: #888;
+    font-size: 12px;
+}
+
+#edgar-plus-archive .epa-footer-spacer {
+    flex: 1;
+}
+
+#edgar-plus-archive .epa-footer a {
+    color: #888;
+}
+
+#edgar-plus-archive .epa-footer a:hover {
+    color: #ccc;
+}
+
+/* Tabs: My code / Cheat sheet */
+#edgar-plus-archive .epa-tabs {
+    display: flex;
+    gap: 4px;
+    background: #1e1f1a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 3px;
+}
+
+#edgar-plus-archive .epa-tab {
+    background: none;
+    border: none;
+    color: #ccc;
+    padding: 4px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+#edgar-plus-archive .epa-tab:hover {
+    color: #fff;
+}
+
+#edgar-plus-archive .epa-tab.active {
+    background: #ffd700;
+    color: #272822;
+    font-weight: bold;
+}
+
+#edgar-plus-archive .epa-tab-count {
+    opacity: 0.6;
+    font-size: 11px;
+    margin-left: 2px;
+}
+
+#edgar-plus-archive.epa-tab-cheat .epa-only-archive,
+#edgar-plus-archive.epa-tab-archive .epa-only-cheat {
+    display: none !important;
+}
+
+#edgar-plus-archive .epa-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    flex-wrap: wrap;
+}
+
+#edgar-plus-archive .epa-src-code {
+    background: #a6e22e;
+    color: #272822;
+}
+
+#edgar-plus-archive .epa-src-table {
+    background: #66d9ef;
+    color: #272822;
+}
+
+#edgar-plus-archive .epa-src-term {
+    background: #ae81ff;
+    color: #272822;
+}
+
+#edgar-plus-archive .epa-group {
+    padding: 10px 12px 4px;
+    color: #e6db74;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #333;
+    background: #23241f;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+#edgar-plus-archive .epa-def {
+    font-size: 12px;
+    color: #ccc;
+    line-height: 1.45;
+    margin-top: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+#edgar-plus-archive .epa-def b,
+#edgar-plus-archive .epa-bilingual b {
+    display: inline-block;
+    min-width: 22px;
+    font-size: 10px;
+    color: #75715e;
+}
+
+#edgar-plus-archive code {
+    font-family: Consolas, 'Courier New', monospace;
+    background: rgba(255, 255, 255, 0.07);
+    color: #e6db74;
+    padding: 0 3px;
+    border-radius: 3px;
+    font-size: 0.95em;
+}
+
+#edgar-plus-archive .epa-line code {
+    background: none;
+    color: #e8e8e2;
+    padding: 0;
+}
+
+#edgar-plus-archive .epa-bilingual {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    line-height: 1.5;
+    color: #ddd;
+}
+
+#edgar-plus-archive .epa-hint {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #a0a0a0;
+}
+
+#edgar-plus-archive .epa-viewer.epa-doc-mode .epa-task {
+    flex: 1;
+    max-height: none;
+    border-bottom: none;
+    padding: 14px 18px;
+}
+
+#edgar-plus-archive .epa-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 14px;
+    font-size: 13px;
+}
+
+#edgar-plus-archive .epa-table th,
+#edgar-plus-archive .epa-table td {
+    border: 1px solid #444;
+    padding: 5px 9px;
+    text-align: left;
+    vertical-align: top;
+    color: #e8e8e2;
+    background: transparent;
+}
+
+#edgar-plus-archive .epa-table th {
+    background: #2F3129;
+    color: #ffd700;
+    font-weight: bold;
+    position: sticky;
+    top: -14px;
+}
+
+#edgar-plus-archive .epa-table tr:nth-child(even) td {
+    background: rgba(255, 255, 255, 0.025);
+}
+
+#edgar-plus-archive .epa-term {
+    max-width: 780px;
+}
+
+#edgar-plus-archive .epa-term-lang {
+    color: #75715e;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 14px;
+}
+
+#edgar-plus-archive .epa-term-lang:first-child {
+    margin-top: 0;
+}
+
+#edgar-plus-archive .epa-term-name {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffd700;
+    margin: 2px 0 6px;
+}
+
+#edgar-plus-archive .epa-term-def {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #e8e8e2;
+}
+
+#edgar-plus-archive .epa-lang-switch {
+    margin-left: auto;
+    display: inline-flex;
+    border: 1px solid #555;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#edgar-plus-archive .epa-lang-switch button {
+    background: #333;
+    color: #aaa;
+    border: none;
+    padding: 2px 10px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+#edgar-plus-archive .epa-lang-switch button.active {
+    background: #ffd700;
+    color: #272822;
+    font-weight: bold;
+}
+
+#edgar-plus-archive .epa-desc {
+    line-height: 1.55;
+    color: #ddd;
+}
+
+/* ------------------------------------------------------------------ */
+/* Exam tools                                                          */
+/* ------------------------------------------------------------------ */
+.edgar-plus-toast-warning {
+    border-left-color: #fd971f;
+    font-weight: bold;
+}
+
+/* "N similar" button in the toolbar */
+.edgar-plus-toolbar .edgar-plus-similar-btn {
+    width: auto;
+    padding: 0 10px !important;
+    gap: 5px;
+    height: 30px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #272822;
+    background-color: #e6db74;
+    border-color: #e6db74;
+    animation: ep-similar-in 0.4s ease;
+}
+
+.edgar-plus-toolbar .edgar-plus-similar-btn:hover {
+    background-color: #f2e98a;
+    border-color: #f2e98a;
+}
+
+.edgar-plus-toolbar .edgar-plus-similar-btn span {
+    color: inherit;
+    opacity: 1;
+    font-size: 12px;
+}
+
+@keyframes ep-similar-in {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* Run status in the editor footer */
+.edgar-plus-runstate {
+    margin-right: auto;
+    font-family: sans-serif;
+    font-size: 12px;
+    padding: 3px 9px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    cursor: help;
+    white-space: nowrap;
+}
+
+.edgar-plus-runstate[hidden] {
+    display: none;
+}
+
+.edgar-plus-runstate[data-state="clean"] {
+    color: #a6e22e;
+    border-color: rgba(166, 226, 46, 0.35);
+}
+
+.edgar-plus-runstate[data-state="dirty"] {
+    color: #fd971f;
+    border-color: rgba(253, 151, 31, 0.5);
+    background: rgba(253, 151, 31, 0.08);
+}
+
+.edgar-plus-runstate[data-state="never"] {
+    color: var(--ep-fg, #ccc);
+    opacity: 0.75;
+    border-color: var(--ep-btn-border, #555);
+}
+
+/* Dots on Edgar's question chips */
+question-navigation .aii-qn.ep-qn-dirty,
+question-navigation .aii-qn.ep-qn-never {
+    position: relative;
+}
+
+question-navigation .aii-qn.ep-qn-dirty::after,
+question-navigation .aii-qn.ep-qn-never::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+question-navigation .aii-qn.ep-qn-dirty::after {
+    background: #fd971f;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+
+question-navigation .aii-qn.ep-qn-never::after {
+    background: #9e9e9e;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+
+/* Code history popover */
+.edgar-plus-history-pop {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 8px;
+    width: 420px;
+    max-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    background: #2F3129;
+    color: #f8f8f2;
+    border: 1px solid #555;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    z-index: 30;
+    font-family: sans-serif;
+    font-size: 13px;
+    font-weight: normal;
+}
+
+.edgar-plus-history-pop .ep-hp-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-bottom: 1px solid #444;
+}
+
+.edgar-plus-history-pop .ep-hp-title {
+    font-weight: bold;
+    font-size: 14px;
+    color: #f8f8f2;
+    opacity: 1;
+}
+
+.edgar-plus-history-pop .ep-hp-sub {
+    color: #999;
+    font-size: 12px;
+    flex: 1;
+}
+
+.edgar-plus-history-pop button {
+    font-weight: normal;
+    font-size: 12px;
+    padding: 3px 9px;
+}
+
+.edgar-plus-history-pop button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.edgar-plus-history-pop .ep-hp-list {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.edgar-plus-history-pop .ep-hp-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #3a3b33;
+    cursor: pointer;
+}
+
+.edgar-plus-history-pop .ep-hp-item:hover {
+    background: #3a3b33;
+}
+
+.edgar-plus-history-pop .ep-hp-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.edgar-plus-history-pop .ep-hp-time {
+    font-family: Consolas, monospace;
+    color: #e6db74;
+    font-size: 13px;
+    opacity: 1;
+}
+
+.edgar-plus-history-pop .ep-hp-reason {
+    color: #ddd;
+    font-size: 12px;
+    opacity: 1;
+}
+
+.edgar-plus-history-pop .ep-hp-delta {
+    color: #999;
+    font-size: 11px;
+    opacity: 1;
+}
+
+.edgar-plus-history-pop .ep-hp-btns {
+    display: flex;
+    gap: 6px;
+}
+
+.edgar-plus-history-pop .ep-hp-empty,
+.edgar-plus-history-pop .ep-hp-foot {
+    padding: 12px;
+    color: #aaa;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.edgar-plus-history-pop .ep-hp-foot {
+    padding: 7px 12px;
+    border-top: 1px solid #444;
+    font-size: 11px;
+    color: #888;
+}
+
+/* Modal (snapshot preview) */
+.edgar-plus-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483100;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    color: #f8f8f2;
+    text-align: left;
+}
+
+.edgar-plus-modal .ep-m-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.edgar-plus-modal .ep-m-window {
+    position: absolute;
+    top: 6vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(1300px, 92vw);
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    background: #272822;
+    border: 1px solid #444;
+    border-radius: 8px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+}
+
+.edgar-plus-modal .ep-m-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: #2F3129;
+    border-bottom: 1px solid #444;
+}
+
+.edgar-plus-modal .ep-m-title {
+    flex: 1;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.edgar-plus-modal .ep-m-sub {
+    font-weight: normal;
+    color: #aaa;
+    font-size: 13px;
+    margin-left: 6px;
+}
+
+.edgar-plus-modal .ep-m-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.edgar-plus-modal button {
+    background: #444;
+    color: #f8f8f2;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.edgar-plus-modal button:hover:not(:disabled) {
+    background: #555;
+}
+
+.edgar-plus-modal button:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.edgar-plus-modal .ep-m-primary {
+    background: #a6e22e;
+    border-color: #a6e22e;
+    color: #272822;
+    font-weight: bold;
+}
+
+.edgar-plus-modal .ep-m-primary:hover:not(:disabled) {
+    background: #b8f040;
+}
+
+.edgar-plus-modal .ep-m-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    line-height: 1;
+    padding: 0 4px;
+    color: #ccc;
+}
+
+.edgar-plus-modal .ep-m-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 8px 14px 0;
+    border-bottom: 1px solid #444;
+}
+
+.edgar-plus-modal .ep-m-tabs button {
+    border-radius: 4px 4px 0 0;
+    border-bottom: none;
+    background: #333;
+}
+
+.edgar-plus-modal .ep-m-tabs button.active {
+    background: #272822;
+    color: #ffd700;
+    font-weight: bold;
+}
+
+.edgar-plus-modal .ep-m-body {
+    overflow: auto;
+    padding: 12px 14px;
+}
+
+.edgar-plus-modal .ep-m-code {
+    margin: 0;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 13px;
+    color: #f8f8f2;
+    background: #1e1f1a;
+    border: 1px solid #3a3b33;
+    border-radius: 4px;
+    padding: 10px;
+    white-space: pre;
+}
+
+.edgar-plus-modal .ep-m-empty {
+    color: #aaa;
+    padding: 20px 0;
+}
+
+/* Side-by-side diff tables (test diff + snapshot preview) */
+.ep-diff-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-family: Consolas, 'Courier New', monospace !important;
+    font-size: 12.5px;
+    line-height: 1.45;
+    background: #1e1f1a;
+    color: #e8e8e2;
+}
+
+.ep-diff-table th {
+    text-align: left;
+    font-family: sans-serif;
+    font-size: 12px;
+    color: #ffd700;
+    background: #2F3129;
+    padding: 4px 8px;
+    border-bottom: 1px solid #444;
+}
+
+.ep-diff-table th:nth-child(1),
+.ep-diff-table th:nth-child(3) {
+    width: 38px;
+}
+
+.ep-diff-table td {
+    padding: 0 8px;
+    vertical-align: top;
+    border: none;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.ep-diff-table .ep-d-ln {
+    color: #75715e;
+    text-align: right;
+    user-select: none;
+    padding-right: 6px;
+    border-right: 1px solid #3a3b33;
+}
+
+.ep-diff-table .ep-d-same td.ep-d-code {
+    color: #9a9a92;
+}
+
+.ep-diff-table .ep-d-a {
+    background: rgba(249, 38, 114, 0.12);
+}
+
+.ep-diff-table .ep-d-b {
+    background: rgba(166, 226, 46, 0.12);
+}
+
+.ep-diff-table .ep-d-none {
+    background: repeating-linear-gradient(-45deg, transparent, transparent 4px, rgba(255, 255, 255, 0.03) 4px, rgba(255, 255, 255, 0.03) 8px);
+}
+
+.ep-diff-table .ep-hl-a {
+    background: rgba(249, 38, 114, 0.55);
+    color: #fff;
+    border-radius: 2px;
+}
+
+.ep-diff-table .ep-hl-b {
+    background: rgba(166, 226, 46, 0.5);
+    color: #fff;
+    border-radius: 2px;
+}
+
+.ep-diff-table .ep-ws {
+    color: #75715e;
+    opacity: 0.85;
+}
+
+.ep-diff-table .ep-d-skip td {
+    text-align: center;
+    color: #75715e;
+    font-family: sans-serif;
+    font-size: 11px;
+    padding: 2px;
+    background: #23241f;
+}
+
+/* Readable test diff under Edgar's test results */
+.ep-testdiff {
+    margin: 6px 0 4px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #272822;
+    color: #f8f8f2;
+    font-family: sans-serif;
+    font-size: 13px;
+    text-align: left;
+}
+
+.ep-testdiff .ep-td-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: #2F3129;
+    border-bottom: 1px solid #444;
+}
+
+.ep-testdiff .ep-td-title {
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.ep-testdiff .ep-td-summary {
+    flex: 1;
+    min-width: 200px;
+}
+
+.ep-testdiff code {
+    font-family: Consolas, monospace !important;
+    background: rgba(255, 255, 255, 0.1);
+    color: #e6db74;
+    padding: 0 4px;
+    border-radius: 3px;
+}
+
+.ep-testdiff .ep-td-badge {
+    background: rgba(253, 151, 31, 0.18);
+    color: #fd971f;
+    border: 1px solid rgba(253, 151, 31, 0.5);
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.ep-testdiff .ep-td-toggle {
+    color: #66d9ef;
+    font-size: 12px;
+}
+
+.ep-testdiff .ep-td-note,
+.ep-testdiff .ep-td-legend {
+    padding: 4px 10px;
+    font-size: 12px;
+    color: #fd971f;
+    border-top: 1px solid #3a3b33;
+}
+
+.ep-testdiff .ep-td-legend {
+    color: #888;
+    font-size: 11px;
+}
+
+tr.ep-hide-row {
+    display: none !important;
+}
+
+/* Time per question */
+.ep-qtime {
+    margin-top: 4px;
+    padding: 2px 8px;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    background: #fff;
+    color: #333;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    align-self: center;
+}
+
+.ep-qtime:hover {
+    border-color: #888;
+}
+
+.ep-qtime-pop {
+    position: fixed;
+    z-index: 2147483200;
+    width: 260px;
+    background: #2F3129;
+    color: #f8f8f2;
+    border: 1px solid #555;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    padding: 10px 12px;
+    font-family: sans-serif;
+    font-size: 13px;
+}
+
+.ep-qtime-pop .ep-qp-title {
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.ep-qtime-pop .ep-qp-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+}
+
+.ep-qtime-pop .ep-qp-row.current {
+    color: #ffd700;
+    font-weight: bold;
+}
+
+.ep-qtime-pop .ep-qp-q {
+    width: 30px;
+}
+
+.ep-qtime-pop .ep-qp-bar {
+    flex: 1;
+    height: 6px;
+    background: #444;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.ep-qtime-pop .ep-qp-bar span {
+    display: block;
+    height: 100%;
+    background: #66d9ef;
+}
+
+.ep-qtime-pop .ep-qp-t {
+    width: 58px;
+    text-align: right;
+    font-family: Consolas, monospace;
+}
+
+.ep-qtime-pop .ep-qp-total {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #444;
+    font-family: Consolas, monospace;
+}
+
+.ep-qtime-pop .ep-qp-note {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #999;
+}
+
+@keyframes ep-timer-flash {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(249, 38, 114, 0); }
+    50% { box-shadow: 0 0 0 6px rgba(249, 38, 114, 0.55); }
+}
+
+#aii-countdown.ep-timer-flash {
+    animation: ep-timer-flash 1s ease-in-out 8;
+}
+
+/* Archive: similar results + personal snippets */
+#edgar-plus-archive .epa-similar-banner {
+    padding: 9px 12px;
+    background: rgba(230, 219, 116, 0.12);
+    border-bottom: 1px solid #444;
+    color: #e6db74;
+    line-height: 1.6;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+#edgar-plus-archive .epa-similar-banner a {
+    color: #66d9ef;
+    margin-left: 6px;
+    white-space: nowrap;
+}
+
+#edgar-plus-archive .epa-src-mine {
+    background: #e6db74;
+    color: #272822;
+}
+
+#edgar-plus-archive .epa-chip-new {
+    background: #a6e22e;
+    border-color: #a6e22e;
+    color: #272822;
+    font-weight: bold;
+}
+
+#edgar-plus-archive .epa-chip-new::after {
+    content: none;
+}
+
+#edgar-plus-archive .epa-btn-danger:hover {
+    background: #f92672;
+    border-color: #f92672;
+}
+
+#edgar-plus-archive .epa-btn-danger[data-armed="1"] {
+    background: #f92672;
+    border-color: #f92672;
+    color: #fff;
+}
+
+#edgar-plus-archive .epa-my-io a {
+    color: #888;
+}
+
+#edgar-plus-archive .epa-my-io a:hover {
+    color: #ccc;
+}
+
+#edgar-plus-archive .epa-viewer.epa-form-mode > :not(.epa-form) {
+    display: none !important;
+}
+
+#edgar-plus-archive .epa-form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 16px;
+    min-height: 0;
+}
+
+#edgar-plus-archive .epa-form[hidden] {
+    display: none;
+}
+
+#edgar-plus-archive .epa-form-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #ffd700;
+}
+
+#edgar-plus-archive .epa-f-label {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin: 0;
+    font-weight: normal;
+    color: #aaa;
+    font-size: 12px;
+}
+
+#edgar-plus-archive .epa-f-label input,
+#edgar-plus-archive .epa-f-label textarea,
+#edgar-plus-archive .epa-f-label select,
+#edgar-plus-archive .epa-f-code-fallback {
+    background: #1e1f1a;
+    color: #f8f8f2;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 13px;
+    font-family: inherit;
+}
+
+#edgar-plus-archive .epa-f-label input:focus,
+#edgar-plus-archive .epa-f-label textarea:focus {
+    outline: none;
+    border-color: #66d9ef;
+}
+
+#edgar-plus-archive .epa-f-code,
+#edgar-plus-archive .epa-f-code-fallback {
+    flex: 1;
+    min-height: 160px;
+    border: 1px solid #555;
+    border-radius: 4px;
+}
+
+#edgar-plus-archive .epa-f-code-fallback {
+    font-family: Consolas, monospace;
+}
+
+#edgar-plus-archive .epa-f-hint {
+    font-size: 12px;
+    color: #888;
+}
+
+#edgar-plus-archive .epa-f-actions {
+    display: flex;
+    gap: 8px;
 }
